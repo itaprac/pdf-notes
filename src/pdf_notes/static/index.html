@@ -56,7 +56,7 @@
   .hl.done { background: var(--hl-done); } .hl.area.done { border-color: rgba(40,170,90,.8); background: transparent; }
   .hl.rejected { background: var(--hl-rej); } .hl.area.rejected { border-color: #aaa; background: transparent; }
   .hl.flash { animation: flash 1.2s ease 2; }
-  .page.over-note .textLayer span { cursor: pointer; }
+  .page.over-note .textLayer span, .page.over-link .textLayer { cursor: pointer; }
   @keyframes flash { 50% { background: rgba(10, 102, 216, .45); } }
   .pin { position: absolute; right: -30px; transform: translateY(-2px); pointer-events: auto; cursor: pointer;
          min-width: 22px; height: 22px; border-radius: 11px; background: #f5b400; color: #000; font-size: 11px; font-weight: 700;
@@ -411,6 +411,16 @@ async function renderPage(p) {
   if (!p.text) p.text = dehyphen(norm(content.items.map((it) => it.str + (it.hasEOL ? " " : "")).join("")));
   await new pdfjsLib.TextLayer({ textContentSource: content, container: tl, viewport: vp }).render();
   const end = document.createElement("div"); end.className = "endOfContent"; tl.appendChild(end);
+  if (!p.links) {
+    p.links = (await p.page.getAnnotations({ intent: "display" }))
+      .filter((a) => a.subtype === "Link" && (a.dest || a.url))
+      .map((a) => {
+        const [x1, y1, x2, y2] = p.base.convertToViewportRectangle(a.rect);
+        return { dest: a.dest, url: a.url,
+          x: Math.min(x1, x2) / p.base.width, y: Math.min(y1, y2) / p.base.height,
+          w: Math.abs(x2 - x1) / p.base.width, h: Math.abs(y2 - y1) / p.base.height };
+      });
+  }
 }
 function unrenderPage(p) {
   if (!p.rendered) return;
@@ -433,6 +443,34 @@ function scrollToPage(num, frac = 0, smooth = true) {
   viewer.scrollTo({ top: p.div.offsetTop + frac * p.div.offsetHeight - 80, behavior: smooth ? "smooth" : "auto" });
 }
 viewer.addEventListener("scroll", () => { const c = currentPage(); if (c) $("pageind").textContent = `${t("page")} ${c.num} / ${S.pages.length}`; });
+
+// Use the PDF's destinations rather than guessing references from their text.
+function linkAt(pageDiv, clientX, clientY) {
+  const b = pageDiv.getBoundingClientRect();
+  const x = (clientX - b.left) / b.width, y = (clientY - b.top) / b.height;
+  return S.pages[+pageDiv.dataset.page - 1].links?.find((r) =>
+    x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+}
+async function followLink(link) {
+  if (!link.dest) {
+    // Ignore executable and local-file URL schemes from untrusted PDFs.
+    if (/^https?:\/\//i.test(link.url)) window.open(link.url, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const pdf = S.pdf;
+  const dest = typeof link.dest === "string" ? await pdf.getDestination(link.dest) : link.dest;
+  if (!dest || pdf !== S.pdf) return;
+  const index = Number.isInteger(dest[0]) ? dest[0] : await pdf.getPageIndex(dest[0]);
+  const p = S.pages[index];
+  if (!p) return;
+  const mode = dest[1]?.name;
+  let x = p.page.view[0], y = p.page.view[3];
+  if (mode === "XYZ" || mode === "FitR") { x = dest[2] ?? x; y = dest[mode === "FitR" ? 5 : 3] ?? y; }
+  else if (mode === "FitH" || mode === "FitBH") y = dest[2] ?? y;
+  const [, top] = p.base.convertToViewportPoint(x, y);
+  getSelection()?.removeAllRanges();
+  scrollToPage(index + 1, Math.max(0, Math.min(1, top / p.base.height)), false);
+}
 
 // ---------- text selection ----------
 const addbtn = $("addbtn");
@@ -636,7 +674,11 @@ viewer.addEventListener("click", (e) => {
   if (sel && !sel.isCollapsed && norm(sel.toString())) return;  // the user is selecting text
   const pageDiv = e.target.closest(".page");
   const id = pageDiv && noteAt(pageDiv, e.clientX, e.clientY);
-  if (!id) return;
+  if (!id) {
+    const link = pageDiv && linkAt(pageDiv, e.clientX, e.clientY);
+    if (link) followLink(link).catch(console.error);
+    return;
+  }
   document.body.classList.remove("side-hidden");
   selectCard(id, true);
   flash(id);
@@ -648,7 +690,12 @@ viewer.addEventListener("mousemove", (e) => {
     hoverRaf = 0;
     const pageDiv = e.target.closest?.(".page");
     document.querySelectorAll(".page.over-note").forEach((p) => p !== pageDiv && p.classList.remove("over-note"));
-    if (pageDiv) pageDiv.classList.toggle("over-note", !!noteAt(pageDiv, e.clientX, e.clientY));
+    document.querySelectorAll(".page.over-link").forEach((p) => p !== pageDiv && p.classList.remove("over-link"));
+    if (pageDiv) {
+      const active = !document.body.classList.contains("area-mode");
+      pageDiv.classList.toggle("over-note", active && !!noteAt(pageDiv, e.clientX, e.clientY));
+      pageDiv.classList.toggle("over-link", active && !!linkAt(pageDiv, e.clientX, e.clientY));
+    }
   });
 });
 function flash(id) {
