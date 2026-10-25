@@ -17,6 +17,7 @@ agent read the files directly.
 - Upload PDFs by drag and drop, or open a PDF on disk. A PDF on disk is
   served live: when it is rebuilt (e.g. by LaTeX), the page offers a reload.
 - Click PDF references to jump to their destination, or open web links.
+- Light, dark, or system theme, with a saved preference.
 - English and Polish interface.
 - Python 3.9+ standard library only; pdf.js and pdf-lib are bundled.
 
