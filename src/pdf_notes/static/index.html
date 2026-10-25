@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>pdf-notes</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='2' width='24' height='28' rx='5' fill='%232563eb'/%3E%3Crect x='9' y='10' width='14' height='3' rx='1.5' fill='%23ffc83d'/%3E%3Crect x='9' y='17' width='10' height='2.4' rx='1.2' fill='%23fff'/%3E%3Crect x='9' y='22' width='12' height='2.4' rx='1.2' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/vendor/pdfjs/pdf_viewer.css">
 <script>
   (() => {
@@ -16,61 +16,143 @@
 </script>
 <style>
   :root {
-    --bg: #e9e9ec; --panel: #fff; --ink: #1d1d1f; --muted: #6e6e73; --line: #d9d9de;
-    --accent: #0a66d8; --hl: rgba(255, 200, 0, .38); --hl-done: rgba(40, 170, 90, .25);
-    --hl-rej: rgba(140, 140, 140, .25); --side: 380px;
-    --hover: #f3f3f5; --subtle: #f1f1f4; --quote: #444; --quote-bg: #fafafa;
-    --danger: #c4271c; --drop-line: #b9b9c2; --drop-over: #f2f7ff;
-    --banner-bg: #fff7df; --banner-line: #f0d58a;
-    --done-bg: #dff3e5; --done-ink: #1e7a3c; --old-bg: #fff1d6; --old-ink: #8a5a00;
+    --bg: #eceef1; --panel: #fff; --raised: #fff; --ink: #1b1d22; --muted: #6b7180; --faint: #9aa0ab;
+    --line: #dfe2e7; --line-strong: #c9ced6; --hover: #f2f4f7; --subtle: #f4f5f8; --press: #e8ebf0;
+    --accent: #2563eb; --accent-hover: #1d55d0; --accent-solid: #2563eb; --accent-solid-hover: #1d55d0; --accent-ink: #fff; --accent-soft: rgba(37, 99, 235, .1); --ring: rgba(37, 99, 235, .35);
+    --quote: #3d424c; --quote-bg: #f7f8fa;
+    --danger: #c9302c; --danger-solid: #c62f2a; --danger-soft: rgba(217, 58, 53, .1);
+    --mark: #f5b400; --mark-done: #2f9e5b; --mark-rej: #9aa0ab;
+    --hl: rgba(255, 200, 0, .38); --hl-done: rgba(40, 170, 90, .25); --hl-rej: rgba(140, 140, 140, .25);
+    --done-bg: #e2f4e8; --done-ink: #1e7a3c; --rej-bg: #eceef1; --rej-ink: #5d636e; --old-bg: #fff1d6; --old-ink: #8a5a00;
+    --banner-bg: #fff8e3; --banner-line: #f0d58a;
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
+    --shadow: 0 2px 6px rgba(16, 24, 40, .08), 0 1px 2px rgba(16, 24, 40, .06);
+    --shadow-lg: 0 18px 48px rgba(16, 24, 40, .18), 0 4px 12px rgba(16, 24, 40, .08);
+    --backdrop: rgba(17, 20, 26, .38);
+    --radius: 8px; --radius-lg: 12px; --ctl: 32px; --side: 380px; --head: 52px;
     color-scheme: light;
   }
   :root[data-theme="dark"] {
-    --bg: #15171b; --panel: #202329; --ink: #eceef2; --muted: #a4abb7; --line: #3c424d;
-    --accent: #347fe7; --hover: #2c313a; --subtle: #2c313a; --quote: #c3c9d3; --quote-bg: #191c21;
-    --danger: #ff8a80; --drop-line: #616a79; --drop-over: #23344e;
-    --banner-bg: #40351c; --banner-line: #78602e;
-    --done-bg: #203d2d; --done-ink: #88dba6; --old-bg: #45351d; --old-ink: #f4ce85;
+    --bg: #111317; --panel: #1b1e24; --raised: #22262d; --ink: #e9ebef; --muted: #a0a7b4; --faint: #737b88;
+    --line: #2f343d; --line-strong: #434a56; --hover: #2a2f37; --subtle: #252930; --press: #323844;
+    --accent: #4d8cf5; --accent-hover: #6a9ff7; --accent-solid: #2563eb; --accent-solid-hover: #1f5bd8; --accent-ink: #fff; --accent-soft: rgba(77, 140, 245, .16); --ring: rgba(77, 140, 245, .45);
+    --quote: #c6ccd6; --quote-bg: #15181d;
+    --danger: #ff8a80; --danger-solid: #c62f2a; --danger-soft: rgba(255, 138, 128, .12);
+    --mark: #e8ab0c; --mark-done: #3fb36b; --mark-rej: #7d8490;
+    --done-bg: #1d3a29; --done-ink: #8adba6; --rej-bg: #2a2e35; --rej-ink: #a9b0bb; --old-bg: #45351d; --old-ink: #f4ce85;
+    --banner-bg: #3a311c; --banner-line: #6e5a2c;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow: 0 2px 6px rgba(0, 0, 0, .35), 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-lg: 0 18px 48px rgba(0, 0, 0, .55), 0 4px 12px rgba(0, 0, 0, .35);
+    --backdrop: rgba(0, 0, 0, .55);
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+  html, body { margin: 0; height: 100%; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg);
+               -webkit-font-smoothing: antialiased; }
   [hidden] { display: none !important; }
-  header { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--line); }
-  header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
-  header a.home { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; }
-  header a.home:hover { color: var(--ink); }
-  header .meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  button, select, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* controls: one height, one radius, one look */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 11px;
+         border: 1px solid var(--line); background: var(--raised); color: var(--ink); border-radius: var(--radius);
+         cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500; line-height: 1; box-shadow: var(--shadow-sm); text-decoration: none;
+         transition: background-color .12s, border-color .12s, color .12s, box-shadow .12s; flex-shrink: 0; }
+  .btn:hover { background: var(--hover); border-color: var(--line-strong); }
+  .btn:active { background: var(--press); }
+  .btn.icon { width: var(--ctl); padding: 0; }
+  .btn.primary { background: var(--accent-solid); border-color: var(--accent-solid); color: var(--accent-ink); }
+  .btn.primary:hover { background: var(--accent-solid-hover); border-color: var(--accent-solid-hover); }
+  .btn.danger-solid { background: var(--danger-solid); border-color: var(--danger-solid); color: #fff; }
+  .btn.danger-solid:hover { filter: brightness(1.06); }
+  .btn.ghost { background: transparent; border-color: transparent; box-shadow: none; color: var(--muted); }
+  .btn.ghost:hover { background: var(--hover); color: var(--ink); }
+  .btn.ghost.danger:hover { background: var(--danger-soft); color: var(--danger); }
+  .btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .btn.sm { --ctl: 26px; font-size: 12px; padding: 0 8px; gap: 4px; border-radius: 6px; }
+  .btn.sm .i { width: 14px; height: 14px; }
+  .btn.wide { width: 100%; }
+  .seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--subtle); border: 1px solid var(--line); border-radius: var(--radius); }
+  .seg button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: calc(var(--ctl) - 6px);
+                padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .seg button:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--raised); color: var(--ink); box-shadow: var(--shadow); }
+  .seg .n { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .seg button[aria-pressed="true"] .n { color: var(--muted); }
+  .group { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: var(--radius); background: var(--raised); box-shadow: var(--shadow-sm); height: var(--ctl); flex-shrink: 0; }
+  .group .btn { border: 0; box-shadow: none; background: transparent; height: calc(var(--ctl) - 2px); border-radius: 0; }
+  .group .btn:hover { background: var(--hover); }
+  .group .btn:first-child { border-radius: calc(var(--radius) - 1px) 0 0 calc(var(--radius) - 1px); }
+  .group .btn:last-child { border-radius: 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0; }
+  .group .sep { width: 1px; align-self: stretch; background: var(--line); }
+  .selectwrap { position: relative; display: inline-flex; flex-shrink: 0; }
+  .selectwrap select { appearance: none; -webkit-appearance: none; height: var(--ctl); padding: 0 26px 0 10px; border: 1px solid var(--line);
+                       border-radius: var(--radius); background: var(--raised); color: var(--ink); cursor: pointer; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-sm); }
+  .selectwrap select:hover { background: var(--hover); border-color: var(--line-strong); }
+  .selectwrap .i { position: absolute; right: 8px; top: 50%; width: 12px; height: 12px; margin-top: -6px; pointer-events: none; color: var(--muted); }
+  kbd { display: inline-block; min-width: 18px; text-align: center; background: var(--subtle); border: 1px solid var(--line); border-bottom-width: 2px;
+        border-radius: 4px; padding: 0 4px; font: 11px/16px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); }
+
+  /* header */
+  header { position: relative; z-index: 20; height: var(--head); display: flex; align-items: center; gap: 8px; padding: 0 12px 0 14px;
+           background: var(--panel); border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 15px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+  .brand .logo { width: 22px; height: 22px; }
+  .titlebox { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; margin-left: 2px; }
+  header h1 { font-size: 14px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+  header .meta { color: var(--muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
   header .spacer { flex: 1; }
-  button, select { font: inherit; }
-  .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 4px 10px; cursor: pointer; color: var(--ink); white-space: nowrap; }
-  .btn:hover { background: var(--hover); }
-  .btn.on, .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn.danger { color: var(--danger); }
-  #theme { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 4px; }
+  header .divider { width: 1px; height: 22px; background: var(--line); margin: 0 2px; }
+  .tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  #pageind { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 62px; text-align: right; }
+  #zoomval { min-width: 50px; padding: 0 4px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
   #theme .sun, :root[data-theme="dark"] #theme .moon { display: none; }
   :root[data-theme="dark"] #theme .sun { display: block; }
-  #zoomval { min-width: 44px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #sidebtn { position: relative; }
+  #sidebtn .badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
+                    background: var(--mark); color: #1b1d22; font-size: 10.5px; font-weight: 700; line-height: 17px; text-align: center; box-shadow: 0 0 0 2px var(--panel); }
 
   /* library */
-  #library { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
-  #drop { border: 2px dashed var(--drop-line); border-radius: 14px; background: var(--panel); padding: 34px; text-align: center; color: var(--muted); }
-  #drop.over { border-color: var(--accent); background: var(--drop-over); color: var(--ink); }
-  #drop b { color: var(--ink); }
-  #docs { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
-  .doc { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px; }
-  .doc a { color: var(--ink); text-decoration: none; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .doc a:hover { color: var(--accent); }
-  .doc .info { color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .doc .src { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+  #library { max-width: 820px; margin: 0 auto; padding: 32px 20px 64px; }
+  #drop { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1.5px dashed var(--line-strong); border-radius: 16px;
+          background: var(--panel); padding: 34px 24px 30px; text-align: center; color: var(--muted); transition: border-color .15s, background-color .15s; }
+  #drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+  #drop .badge { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 8px; }
+  #drop .badge .i { width: 22px; height: 22px; }
+  #drop .title { color: var(--ink); font-weight: 600; font-size: 15px; }
+  #drop .sub { font-size: 13px; margin-bottom: 14px; }
+  .libhead { display: flex; align-items: baseline; gap: 8px; margin: 30px 2px 10px; }
+  .libhead h2 { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .libhead .n { color: var(--faint); font-size: 12px; }
+  #docs { display: flex; flex-direction: column; gap: 8px; }
+  .doc { position: relative; display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+         padding: 10px 10px 10px 12px; box-shadow: var(--shadow-sm); transition: border-color .12s, box-shadow .12s; }
+  .doc:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
+  .doc:focus-within { border-color: var(--accent); }
+  .doc .ficon { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; background: var(--subtle); color: var(--muted); flex: none; }
+  .doc .body { flex: 1; min-width: 0; }
+  .doc a { display: block; color: var(--ink); text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; outline: none; }
+  .doc a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+  .doc:hover a { color: var(--accent); }
+  .doc .sub { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc .sub .missing { color: var(--danger); }
+  .doc .count { flex: none; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .doc .count b { display: inline-block; min-width: 20px; padding: 1px 7px; border-radius: 10px; background: var(--subtle); color: var(--ink); font-weight: 600; text-align: center; margin-right: 4px; }
+  .doc .count b.has { background: #fff1c2; color: #6b4b00; }
+  :root[data-theme="dark"] .doc .count b.has { background: #4a3c12; color: #f6d77a; }
+  .doc .btn { position: relative; z-index: 1; }
+  .lib-empty { text-align: center; color: var(--muted); padding: 28px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
 
   /* viewer */
-  #app { position: absolute; top: 48px; left: 0; right: 0; bottom: 0; display: flex; }
-  #viewer { flex: 1; overflow: auto; position: relative; padding: 18px 0 40vh; }
-  #pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-  .page { position: relative; background: #fff; color-scheme: light; box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+  #app { position: absolute; top: var(--head); left: 0; right: 0; bottom: 0; display: flex; }
+  #stage { flex: 1; position: relative; min-width: 0; }
+  #viewer { position: absolute; inset: 0; overflow: auto; padding: 24px 0 40vh; }
+  #pages { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+  .page { position: relative; background: #fff; color-scheme: light; box-shadow: 0 1px 3px rgba(16, 24, 40, .12), 0 4px 14px rgba(16, 24, 40, .08); }
   .page canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  :root[data-theme="dark"] .page { background: #1a1a1a; }
+  :root[data-theme="dark"] .page { background: #1a1a1a; box-shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 4px 14px rgba(0, 0, 0, .35); }
   :root[data-theme="dark"] .page canvas { filter: invert(.9) hue-rotate(180deg); }
   :root[data-theme="dark"] .hl { mix-blend-mode: screen; }
   .page .hl-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
@@ -78,137 +160,279 @@
   .page .pin-layer { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
   .page .area-layer { position: absolute; inset: 0; z-index: 4; display: none; cursor: crosshair; touch-action: none; }
   body.area-mode .page .area-layer { display: block; }
+  body.area-mode .page { outline: 1px dashed var(--accent); outline-offset: 3px; }
   .hl { position: absolute; background: var(--hl); border-radius: 2px; mix-blend-mode: multiply; }
-  .hl.area { background: rgba(255, 200, 0, .12); border: 2px solid rgba(230, 160, 0, .9); mix-blend-mode: normal; }
-  .hl.done { background: var(--hl-done); } .hl.area.done { border-color: rgba(40,170,90,.8); background: transparent; }
+  .hl.area { background: rgba(255, 200, 0, .1); border: 2px solid rgba(230, 160, 0, .9); border-radius: 3px; mix-blend-mode: normal; }
+  .hl.done { background: var(--hl-done); } .hl.area.done { border-color: rgba(40, 170, 90, .8); background: transparent; }
   .hl.rejected { background: var(--hl-rej); } .hl.area.rejected { border-color: #aaa; background: transparent; }
   .hl.flash { animation: flash 1.2s ease 2; }
   .page.over-note .textLayer span, .page.over-link .textLayer { cursor: pointer; }
-  @keyframes flash { 50% { background: rgba(10, 102, 216, .45); } }
-  .pin { position: absolute; right: -30px; transform: translateY(-2px); pointer-events: auto; cursor: pointer;
-         min-width: 22px; height: 22px; border-radius: 11px; background: #f5b400; color: #000; font-size: 11px; font-weight: 700;
-         display: flex; align-items: center; justify-content: center; padding: 0 5px; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
-  .pin.done { background: #34a853; color: #fff; } .pin.rejected { background: #aaa; color: #fff; }
-  .drag-rect { position: absolute; border: 2px dashed var(--accent); background: rgba(10,102,216,.08); pointer-events: none; }
+  @keyframes flash { 50% { background: rgba(37, 99, 235, .4); } }
+  .pin { position: absolute; right: -32px; transform: translateY(-2px); pointer-events: auto; cursor: pointer;
+         min-width: 22px; height: 22px; border-radius: 11px; background: var(--mark); color: #1b1d22; font-size: 11px; font-weight: 700;
+         display: flex; align-items: center; justify-content: center; padding: 0 6px; box-shadow: 0 0 0 2px var(--bg), var(--shadow);
+         font-variant-numeric: tabular-nums; transition: transform .12s; }
+  .pin:hover { transform: translateY(-2px) scale(1.12); }
+  .pin.done { background: var(--mark-done); color: #fff; } .pin.rejected { background: var(--mark-rej); color: #fff; }
+  .drag-rect { position: absolute; border: 2px dashed var(--accent); background: var(--accent-soft); border-radius: 3px; pointer-events: none; }
   .page-num, .page-note, .pin, #addbtn { -webkit-user-select: none; user-select: none; }
-  .page-num { position: absolute; bottom: -15px; left: 0; right: 0; text-align: center; font-size: 11px; color: var(--muted); }
-  .page-note { position: absolute; top: 6px; right: 6px; z-index: 5; opacity: 0; transition: opacity .15s; font-size: 12px; padding: 2px 8px; }
-  .page:hover .page-note { opacity: 1; }
-  @media (hover: none) { .page-note { opacity: .85; } }
-  #addbtn { position: fixed; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
-  #banner { position: fixed; top: 58px; left: 50%; transform: translateX(-50%); z-index: 60; background: var(--banner-bg); border: 1px solid var(--banner-line);
-            border-radius: 9px; padding: 7px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: flex; gap: 10px; align-items: center; }
-  #side { width: var(--side); border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; }
-  #side .top { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  #side .top .count { color: var(--muted); font-size: 12px; flex: 1; min-width: 120px; }
-  #list { flex: 1; overflow: auto; padding: 8px 10px 40px; }
-  .empty { color: var(--muted); padding: 20px 6px; }
-  kbd { background: var(--subtle); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 12px; }
-  .card { border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; margin: 0 0 8px; cursor: pointer; background: var(--panel); }
-  .card:hover { border-color: var(--drop-line); }
-  .card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(10,102,216,.18); }
-  .card.done, .card.rejected { opacity: .6; }
-  .card .head { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
-  .card .head .no { font-weight: 700; color: var(--ink); }
-  .card .head .sec { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chip { font-size: 11px; border-radius: 9px; padding: 0 7px; background: var(--subtle); }
-  .chip.done { background: var(--done-bg); color: var(--done-ink); } .chip.old { background: var(--old-bg); color: var(--old-ink); }
-  .card .quote { margin: 6px 0; padding-left: 8px; border-left: 3px solid #f5b400; color: var(--quote); font-style: italic;
+  .page-num { position: absolute; bottom: -22px; left: 0; right: 0; text-align: center; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .page-note { position: absolute; top: 8px; right: 8px; z-index: 5; opacity: 0; transition: opacity .15s; color-scheme: inherit; }
+  .page:hover .page-note, .page-note:focus-visible { opacity: 1; }
+  @media (hover: none) { .page-note { opacity: .9; } }
+  #addbtn { position: fixed; z-index: 50; box-shadow: var(--shadow-lg); animation: pop .14s ease-out; }
+  .float { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; gap: 10px; align-items: center;
+           padding: 6px 6px 6px 12px; border-radius: 10px; box-shadow: var(--shadow-lg); font-size: 13px; animation: drop .18s ease-out;
+           width: max-content; max-width: calc(100% - 24px); }
+  .float > span { min-width: 0; }
+  .float .i { color: var(--muted); }
+  #banner { background: var(--banner-bg); border: 1px solid var(--banner-line); }
+  #banner .i { color: var(--old-ink); }
+  #areahint { display: none; background: var(--raised); border: 1px solid var(--accent); padding-right: 12px; }
+  #areahint .i { color: var(--accent); }
+  body.area-mode #areahint { display: flex; }
+  body.area-mode #banner { top: 62px; }
+
+  /* side panel */
+  #side { width: var(--side); border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  #side .top { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+  #side .top .row1 { display: flex; align-items: center; gap: 8px; }
+  #side .top h2 { margin: 0; font-size: 14px; font-weight: 600; flex: 1; }
+  #side .seg { width: 100%; }
+  #sideclose { display: none; }
+  #list { flex: 1; overflow: auto; padding: 10px 10px 40px; }
+  .empty { color: var(--muted); padding: 28px 16px; text-align: center; font-size: 13px; line-height: 1.6; }
+  .empty .ill { width: 42px; height: 42px; margin: 0 auto 10px; border-radius: 12px; display: grid; place-items: center; background: var(--subtle); color: var(--faint); }
+  .empty .ill .i { width: 20px; height: 20px; }
+  .empty b { color: var(--ink); font-weight: 600; }
+  .card { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 8px; margin: 0 0 8px; cursor: pointer;
+          background: var(--panel); transition: border-color .12s, box-shadow .12s; }
+  .card:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
+  .card.sel { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .card.done > :not(.acts), .card.rejected > :not(.acts) { opacity: .62; }
+  .card .head { display: flex; gap: 7px; align-items: center; font-size: 12px; color: var(--muted); min-height: 20px; }
+  .card .no { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--mark); color: #1b1d22; font-size: 11px; font-weight: 700;
+              display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; flex: none; }
+  .card.done .no { background: var(--mark-done); color: #fff; } .card.rejected .no { background: var(--mark-rej); color: #fff; }
+  .card .where { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .card .sec { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip { flex: none; font-size: 11px; font-weight: 500; border-radius: 10px; padding: 1px 7px; background: var(--subtle); white-space: nowrap; }
+  .chip.done { background: var(--done-bg); color: var(--done-ink); } .chip.rejected { background: var(--rej-bg); color: var(--rej-ink); }
+  .chip.old { background: var(--old-bg); color: var(--old-ink); }
+  .card .quote { margin: 8px 0 6px; padding: 1px 0 1px 9px; border-left: 3px solid var(--mark); color: var(--quote); font-style: italic; font-size: 13px;
                  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .card .note { white-space: pre-wrap; }
-  .card .acts { display: flex; gap: 6px; margin-top: 7px; }
-  .card .acts .btn { font-size: 12px; padding: 1px 8px; }
-  .export { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; }
-  .export .btn { flex: 1 1 40%; font-size: 13px; }
-  .export .btn.wide { flex-basis: 100%; }
-  .help { font-size: 12px; color: var(--muted); padding: 0 12px 10px; }
-  #editor { position: fixed; inset: 0; background: rgba(0,0,0,.25); z-index: 100; display: flex; align-items: center; justify-content: center; }
-  #editor .box { width: min(560px, 92vw); background: var(--panel); border-radius: 12px; padding: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
-  #editor .ctx { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  #editor .quote { max-height: 120px; overflow: auto; padding: 6px 9px; border-left: 3px solid #f5b400; background: var(--quote-bg); font-style: italic; margin-bottom: 10px; }
-  #editor textarea { width: 100%; min-height: 130px; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
-  #editor textarea { background: var(--quote-bg); color: var(--ink); }
-  #editor .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; align-items: center; }
-  #editor .row .hint { flex: 1; font-size: 12px; color: var(--muted); }
-  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #222; color: #fff; padding: 8px 14px; border-radius: 8px; z-index: 200; }
-  #toast.err { background: #c4271c; }
+  .card .kind { display: inline-flex; align-items: center; gap: 5px; margin: 8px 0 4px; font-size: 12px; color: var(--muted); }
+  .card .kind .i { width: 14px; height: 14px; }
+  .card .note { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
+  .card .note .none { color: var(--faint); font-style: italic; }
+  .card .acts { display: flex; gap: 2px; margin: 8px -6px 0; align-items: center; }
+  .card .acts .spacer { flex: 1; }
+  .card .acts .btn { color: var(--muted); }
+  @media (hover: hover) {
+    .card .acts .btn { opacity: .72; }
+    .card:hover .acts .btn, .card.sel .acts .btn, .card .acts .btn:focus-visible { opacity: 1; }
+  }
+  .export { padding: 10px 12px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .export .wide { grid-column: 1 / -1; }
+  .help { font-size: 12px; color: var(--muted); padding: 0 12px 12px; }
+  .help summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; user-select: none; }
+  .help summary::-webkit-details-marker { display: none; }
+  .help summary:hover { color: var(--ink); }
+  .help summary .i { width: 14px; height: 14px; }
+  .help .text { margin-top: 6px; line-height: 1.65; }
+  .help .text b { color: var(--ink); font-weight: 600; }
+
+  /* dialogs */
+  .overlay { position: fixed; inset: 0; background: var(--backdrop); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;
+             animation: fade .14s ease-out; }
+  .dialog { width: min(580px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line);
+            border-radius: 14px; box-shadow: var(--shadow-lg); animation: pop .16s ease-out; }
+  .dialog.small { width: min(400px, 100%); }
+  .dlg-head { display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0 18px; }
+  .dlg-head > div { flex: 1; min-width: 0; }
+  .dialog h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .dialog .ctx { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .dlg-body { padding: 14px 18px 0; }
+  .dialog .quote { max-height: 120px; overflow: auto; margin: 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--mark);
+                   border-radius: 0 6px 6px 0; background: var(--quote-bg); color: var(--quote); font-style: italic; }
+  .dialog textarea { display: block; width: 100%; min-height: 140px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+                     resize: vertical; background: var(--panel); color: var(--ink); line-height: 1.5; transition: border-color .12s, box-shadow .12s; }
+  .dialog textarea::placeholder { color: var(--faint); }
+  .dialog textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+  .status-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .status-row .lbl { font-size: 12px; color: var(--muted); }
+  .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; padding: 14px 18px 16px; }
+  .dlg-foot .hint { flex: 1; font-size: 12px; color: var(--muted); }
+  #confirm .dlg-body { padding: 18px 20px 0; }
+  #confirm p { margin: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+  #confirm .sub { margin-top: 6px; color: var(--muted); font-size: 13px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 200; display: flex; align-items: center; gap: 8px;
+           max-width: min(560px, calc(100vw - 32px)); background: #1f232a; color: #fff; padding: 9px 14px 9px 12px; border-radius: 10px;
+           box-shadow: var(--shadow-lg); font-size: 13px; animation: rise .18s ease-out; }
+  :root[data-theme="dark"] #toast { background: #eef0f3; color: #1b1d22; }
+  #toast .i { color: #6fd39a; }
+  :root[data-theme="dark"] #toast .i { color: #1e7a3c; }
+  #toast.err, :root[data-theme="dark"] #toast.err { background: var(--danger-solid); color: #fff; }
+  #toast.err .i, :root[data-theme="dark"] #toast.err .i { color: #fff; }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes pop { from { opacity: 0; transform: scale(.97); } }
+  @keyframes rise { from { opacity: 0; transform: translate(-50%, 8px); } }
+  @keyframes drop { from { opacity: 0; transform: translate(-50%, -6px); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
   body.side-hidden #side { display: none; }
-  @media (max-width: 900px) { :root { --side: 300px; } header .meta { display: none; } }
+  @media (max-width: 1100px) { :root { --side: 330px; } }
+  @media (max-width: 900px) { #pageind { display: none; } }
+  @media (max-width: 760px) {
+    /* the notes panel becomes a drawer over the PDF */
+    #side { position: absolute; top: 0; right: 0; bottom: 0; z-index: 40; width: min(420px, 100%); box-shadow: var(--shadow-lg); animation: slide .18s ease-out; }
+    #sideclose { display: inline-flex; }
+    .page-note { width: 26px; padding: 0; }
+    .page-note span { display: none; }
+    header .meta, header .divider, #areabtn .lbl, #homelink .lbl { display: none; }
+    header { gap: 6px; padding: 0 8px; }
+    .tools { gap: 6px; }
+  }
+  @media (max-width: 520px) {
+    #zoomgroup { display: none; }
+    .doc .count .of { display: none; }
+    #library { padding-top: 18px; }
+  }
+  @keyframes slide { from { transform: translateX(24px); opacity: 0; } }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></symbol>
+  <symbol id="i-area" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6M18.5 6l-.9 13.1A2 2 0 0 1 15.6 21H8.4a2 2 0 0 1-2-1.9L5.5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 21h14"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-disk" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/><path d="M12 9v6M9 12h6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-page" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+</svg>
+
 <header>
-  <a class="home" href="/" id="homelink" hidden data-t="library"></a>
-  <h1 id="title">pdf-notes</h1>
-  <span class="meta" id="meta"></span>
+  <a class="brand" href="/" id="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="2" width="24" height="28" rx="5" fill="#2563eb"/><rect x="9" y="10" width="14" height="3" rx="1.5" fill="#ffc83d"/><rect x="9" y="17" width="10" height="2.4" rx="1.2" fill="#fff"/><rect x="9" y="22" width="12" height="2.4" rx="1.2" fill="#fff"/></svg>pdf-notes</a>
+  <a class="btn ghost" href="/" id="homelink" hidden data-t-title="library"><svg class="i"><use href="#i-back"/></svg><span class="lbl" data-t="libraryShort"></span></a>
+  <div class="titlebox" id="titlebox" hidden>
+    <h1 id="title"></h1>
+    <span class="meta" id="meta"></span>
+  </div>
   <span class="spacer"></span>
-  <span id="viewertools" hidden style="display:contents">
-    <span class="meta" id="pageind"></span>
-    <button class="btn" id="zoomout" data-t-title="zoomOut">−</button>
-    <span id="zoomval"></span>
-    <button class="btn" id="zoomin" data-t-title="zoomIn">+</button>
-    <button class="btn" id="fit" data-t-title="fitWidth">↔</button>
-    <button class="btn" id="areabtn" data-t-title="areaTitle"><span data-t="area"></span></button>
-    <button class="btn" id="sidebtn" data-t-title="toggleList">☰</button>
-  </span>
-  <button class="btn" id="theme" type="button" aria-label="Dark theme" aria-pressed="false">
-    <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13a9 9 0 0 1-9.9-9.9A9 9 0 1 0 20.9 13Z"/></svg>
-    <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+  <div class="tools" id="viewertools" hidden>
+    <span id="pageind"></span>
+    <div class="group" id="zoomgroup">
+      <button class="btn icon" id="zoomout" data-t-title="zoomOut"><svg class="i"><use href="#i-minus"/></svg></button>
+      <span class="sep"></span>
+      <button class="btn" id="zoomval" data-t-title="fitWidth"></button>
+      <span class="sep"></span>
+      <button class="btn icon" id="zoomin" data-t-title="zoomIn"><svg class="i"><use href="#i-plus"/></svg></button>
+    </div>
+    <button class="btn" id="areabtn" data-t-title="areaTitle" aria-pressed="false"><svg class="i"><use href="#i-area"/></svg><span class="lbl" data-t="area"></span></button>
+    <button class="btn icon" id="sidebtn" data-t-title="toggleList" aria-pressed="true"><svg class="i"><use href="#i-panel"/></svg><span class="badge" id="sidecount" hidden></span></button>
+    <span class="divider"></span>
+  </div>
+  <button class="btn icon ghost" id="theme" type="button" aria-label="Dark theme" aria-pressed="false">
+    <svg class="moon i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.9 13a9 9 0 0 1-9.9-9.9A9 9 0 1 0 20.9 13Z"/></svg>
+    <svg class="sun i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
   </button>
-  <select class="btn" id="lang" title="Language">
-    <option value="en">EN</option><option value="pl">PL</option>
-  </select>
+  <span class="selectwrap">
+    <select id="lang" title="Language" aria-label="Language">
+      <option value="en">EN</option><option value="pl">PL</option>
+    </select>
+    <svg class="i"><use href="#i-chevron"/></svg>
+  </span>
 </header>
 
 <section id="library" hidden>
   <div id="drop">
-    <p><b data-t="dropTitle"></b></p>
-    <p data-t="dropOr"></p>
-    <button class="btn primary" id="pick" data-t="choose"></button>
+    <div class="badge"><svg class="i"><use href="#i-upload"/></svg></div>
+    <div class="title" data-t="dropTitle"></div>
+    <div class="sub" data-t="dropSub"></div>
+    <button class="btn primary" id="pick"><svg class="i"><use href="#i-file"/></svg><span data-t="choose"></span></button>
     <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
   </div>
+  <div class="libhead"><h2 data-t="docsTitle"></h2><span class="n" id="docsn"></span></div>
   <div id="docs"></div>
 </section>
 
 <main id="app" hidden>
-  <div id="viewer"><div id="pages"></div></div>
+  <div id="stage">
+    <div id="viewer"><div id="pages"></div></div>
+    <div id="areahint" class="float" role="status"><svg class="i"><use href="#i-area"/></svg><span data-t-html="areaHint"></span></div>
+    <div id="banner" class="float" hidden role="status"><svg class="i"><use href="#i-info"/></svg><span data-t="changed"></span><button class="btn primary sm" id="reload"><svg class="i"><use href="#i-refresh"/></svg><span data-t="reload"></span></button></div>
+  </div>
   <aside id="side">
     <div class="top">
-      <span class="count" id="count"></span>
-      <select id="filter" class="btn">
-        <option value="open" data-t="filterOpen"></option>
-        <option value="all" data-t="filterAll"></option>
-      </select>
-      <button class="btn" id="general" data-t="general"></button>
+      <div class="row1">
+        <h2 data-t="notesTitle"></h2>
+        <button class="btn sm" id="general" data-t-title="generalTitle"><svg class="i"><use href="#i-plus"/></svg><span data-t="general"></span></button>
+        <button class="btn icon ghost sm" id="sideclose" data-t-title="close"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="seg" id="filter" role="group">
+        <button data-filter="open" aria-pressed="true"><span data-t="filterOpen"></span><span class="n" id="n-open"></span></button>
+        <button data-filter="all" aria-pressed="false"><span data-t="filterAll"></span><span class="n" id="n-all"></span></button>
+      </div>
     </div>
     <div id="list"></div>
     <div class="export">
-      <button class="btn" id="copymd" data-t="copyMd"></button>
-      <button class="btn" id="dlmd" data-t="downloadMd"></button>
-      <button class="btn wide" id="dlpdf" data-t="downloadPdf" data-t-title="downloadPdfTitle"></button>
+      <button class="btn" id="copymd"><svg class="i"><use href="#i-copy"/></svg><span data-t="copyMd"></span></button>
+      <button class="btn" id="dlmd"><svg class="i"><use href="#i-download"/></svg><span data-t="downloadMd"></span></button>
+      <button class="btn wide" id="dlpdf" data-t-title="downloadPdfTitle"><svg class="i"><use href="#i-download"/></svg><span data-t="downloadPdf"></span></button>
     </div>
-    <div class="help" data-t-html="help"></div>
+    <details class="help" id="help">
+      <summary><svg class="i"><use href="#i-info"/></svg><span data-t="tips"></span></summary>
+      <div class="text" data-t-html="help"></div>
+    </details>
   </aside>
 </main>
 
-<button class="btn primary" id="addbtn" hidden data-t="addNote"></button>
-<div id="banner" hidden><span data-t="changed"></span><button class="btn primary" id="reload" data-t="reload"></button></div>
-<div id="editor" hidden><div class="box">
-  <div class="ctx" id="ed-ctx"></div>
-  <div class="quote" id="ed-quote"></div>
-  <textarea id="ed-note"></textarea>
-  <div class="row">
-    <span class="hint" data-t="editorHint"></span>
-    <select id="ed-status" class="btn">
-      <option value="open" data-t="st_open"></option>
-      <option value="done" data-t="st_done"></option>
-      <option value="rejected" data-t="st_rejected"></option>
-    </select>
+<button class="btn primary" id="addbtn" hidden><svg class="i"><use href="#i-note"/></svg><span data-t="addNote"></span></button>
+<div id="editor" class="overlay" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ed-title">
+  <div class="dlg-head">
+    <div><h2 id="ed-title"></h2><div class="ctx" id="ed-ctx"></div></div>
+    <button class="btn icon ghost sm" id="ed-close" data-t-title="cancel"><svg class="i"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <div class="quote" id="ed-quote"></div>
+    <textarea id="ed-note"></textarea>
+    <div class="status-row" id="ed-status-row">
+      <span class="lbl" data-t="status"></span>
+      <div class="seg" id="ed-status" role="group">
+        <button data-v="open" data-t="st_open"></button>
+        <button data-v="done" data-t="st_done"></button>
+        <button data-v="rejected" data-t="st_rejected"></button>
+      </div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <span class="hint" data-t-html="editorHint"></span>
     <button class="btn" id="ed-cancel" data-t="cancel"></button>
     <button class="btn primary" id="ed-save" data-t="save"></button>
   </div>
 </div></div>
-<div id="toast" hidden></div>
+<div id="confirm" class="overlay" hidden><div class="dialog small" role="alertdialog" aria-modal="true" aria-labelledby="cf-msg">
+  <div class="dlg-body"><p id="cf-msg"></p><div class="sub" id="cf-sub"></div></div>
+  <div class="dlg-foot"><button class="btn" id="cf-no"></button><button class="btn danger-solid" id="cf-yes"></button></div>
+</div></div>
+<div id="toast" hidden role="status" aria-live="polite"></div>
 
 <script type="module">
 import * as pdfjsLib from "/static/vendor/pdfjs/pdf.min.mjs";
@@ -218,46 +442,58 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/vendor/pdfjs/pdf.worker.min.mj
 const STR = {
   en: {
     theme: "Dark theme",
-    library: "← Library", dropTitle: "Drop PDF files here", dropOr: "or", choose: "Choose PDF…",
-    noDocs: "No documents yet.", notesN: (o, n) => `${o} open · ${n} total`, open: "Open", remove: "Remove",
+    library: "Back to the library", libraryShort: "Library", dropTitle: "Drop PDF files here", dropSub: "or pick them from your computer", choose: "Choose PDF…",
+    docsTitle: "Documents", noDocs: "No documents yet. Add a PDF above to start.",
+    notesN: (o, n) => `${o} open · ${n} total`, openN: (o) => `${o} open`, ofN: (n) => `of ${n}`, open: "Open", remove: "Remove",
     removeAsk: (n) => `Remove “${n}” from the library?`, removeAskUpload: (n) => `Remove “${n}” and all its notes?`,
+    removeSub: "The PDF on disk stays where it is.", removeSubUpload: "The uploaded copy and its notes are deleted.",
     uploaded: "uploaded", onDisk: "file on disk", missing: "file missing", uploading: "Uploading…", notPdf: "Not a PDF file",
-    zoomIn: "Zoom in", zoomOut: "Zoom out", fitWidth: "Fit width", area: "▭ Area", areaTitle: "Mark a rectangular area, e.g. a figure (key R)",
-    toggleList: "Show/hide notes", page: "page", pageShort: "p.", filterOpen: "Open", filterAll: "All", general: "＋ General",
-    copyMd: "Copy as Markdown", downloadMd: "Download .md", copied: "Notes copied to clipboard",
+    zoomIn: "Zoom in", zoomOut: "Zoom out", fitWidth: "Fit width", area: "Area", areaTitle: "Mark a rectangular area, e.g. a figure (key R)",
+    areaHint: "Drag over the page to mark an area · <kbd>Esc</kbd> cancels",
+    toggleList: "Show/hide notes", close: "Close", page: "page", pageShort: "p.", filterOpen: "Open", filterAll: "All",
+    notesTitle: "Notes", general: "General", generalTitle: "A note about the whole document",
+    copyMd: "Copy Markdown", downloadMd: "Download .md", copied: "Notes copied to clipboard",
     downloadPdf: "Download PDF with notes", downloadPdfTitle: "The PDF with highlights and notes as annotations (Preview, Acrobat, …). Exports the notes shown in the list.",
-    building: "Building PDF…", pdfFailed: "Could not build the PDF",
-    help: "Select text → <b>Add note</b>. Figure or table: <b>▭ Area</b> (<kbd>R</kbd>). Whole page: button in the page corner. Click marked text to open its note. Save: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Everything is saved immediately.",
-    empty: "No notes yet. Select a passage in the PDF and click <b>Add note</b>. Mark a figure or table with <b>▭ Area</b> or the <kbd>R</kbd> key.",
-    addNote: "＋ Add note", addPageNote: "＋ note on page", editorHint: "⌘/Ctrl + Enter saves, Esc cancels",
+    building: "Building PDF…", pdfFailed: "Could not build the PDF", tips: "How it works",
+    help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
+    empty: "<b>No notes yet</b><br>Select a passage in the PDF and click <b>Add note</b>, or mark a figure with <b>Area</b> (<kbd>R</kbd>).",
+    emptyOpen: "<b>No open notes</b><br>Everything is done. Switch to <b>All</b> to see done and rejected notes.",
+    addNote: "Add note", addPageNote: "Note on page", editorHint: "<kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves",
+    newNote: "New note", editNote: (n) => `Edit note #${n}`, status: "Status",
     placeholder: "What is wrong here and what should change?", cancel: "Cancel", save: "Save", edit: "Edit", del: "Delete",
-    delAsk: "Delete this note?", saved: "Saved", deleted: "Deleted", notSaved: "Not saved", keptText: "Your text is still in the editor.",
+    delAsk: "Delete this note?", delSub: "This cannot be undone.", saved: "Saved", deleted: "Deleted", removed: "Removed", notSaved: "Not saved", keptText: "Your text is still in the editor.",
     kinds: { text: "text passage", area: "page area", page: "whole page", general: "general note" },
-    generalShort: "general", areaLabel: "(page area)", pageLabel: "(whole page)", noText: "(no text)",
+    generalShort: "General", noText: "No text",
     oldPdf: "older PDF", oldPdfTitle: "Added to an older version of the PDF; the marking may be shifted",
-    st_open: "open", st_done: "done", st_rejected: "rejected", changed: "The PDF has changed.", reload: "Reload",
+    st_open: "Open", st_done: "Done", st_rejected: "Rejected", changed: "The PDF has changed.", reload: "Reload",
     pdfFrom: (d) => `PDF from ${d}`, loadErr: "Could not load", lang: "en",
   },
   pl: {
     theme: "Ciemny motyw",
-    library: "← Biblioteka", dropTitle: "Upuść tutaj pliki PDF", dropOr: "albo", choose: "Wybierz PDF…",
-    noDocs: "Nie ma jeszcze dokumentów.", notesN: (o, n) => `${o} otwartych · ${n} wszystkich`, open: "Otwórz", remove: "Usuń",
+    library: "Wróć do biblioteki", libraryShort: "Biblioteka", dropTitle: "Upuść tutaj pliki PDF", dropSub: "albo wybierz je z dysku", choose: "Wybierz PDF…",
+    docsTitle: "Dokumenty", noDocs: "Nie ma jeszcze dokumentów. Dodaj PDF powyżej.",
+    notesN: (o, n) => `${o} otwartych · ${n} wszystkich`, openN: (o) => `${o} otwartych`, ofN: (n) => `z ${n}`, open: "Otwórz", remove: "Usuń",
     removeAsk: (n) => `Usunąć „${n}” z biblioteki?`, removeAskUpload: (n) => `Usunąć „${n}” razem z uwagami?`,
+    removeSub: "Plik PDF na dysku zostaje na miejscu.", removeSubUpload: "Wgrana kopia i jej uwagi zostaną usunięte.",
     uploaded: "wgrany", onDisk: "plik na dysku", missing: "brak pliku", uploading: "Wgrywanie…", notPdf: "To nie jest plik PDF",
-    zoomIn: "Powiększ", zoomOut: "Pomniejsz", fitWidth: "Dopasuj do szerokości", area: "▭ Obszar", areaTitle: "Zaznacz prostokątem obszar strony, np. rysunek (klawisz R)",
-    toggleList: "Pokaż/ukryj listę", page: "strona", pageShort: "s.", filterOpen: "Otwarte", filterAll: "Wszystkie", general: "＋ Ogólna",
-    copyMd: "Kopiuj jako Markdown", downloadMd: "Pobierz .md", copied: "Uwagi skopiowane do schowka",
+    zoomIn: "Powiększ", zoomOut: "Pomniejsz", fitWidth: "Dopasuj do szerokości", area: "Obszar", areaTitle: "Zaznacz prostokątem obszar strony, np. rysunek (klawisz R)",
+    areaHint: "Przeciągnij po stronie, aby zaznaczyć obszar · <kbd>Esc</kbd> anuluje",
+    toggleList: "Pokaż/ukryj listę", close: "Zamknij", page: "strona", pageShort: "s.", filterOpen: "Otwarte", filterAll: "Wszystkie",
+    notesTitle: "Uwagi", general: "Ogólna", generalTitle: "Uwaga do całego dokumentu",
+    copyMd: "Kopiuj Markdown", downloadMd: "Pobierz .md", copied: "Uwagi skopiowane do schowka",
     downloadPdf: "Pobierz PDF z uwagami", downloadPdfTitle: "PDF z zakreśleniami i notatkami jako adnotacjami (Podgląd, Acrobat, …). Eksportuje uwagi widoczne na liście.",
-    building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a",
-    help: "Zaznacz tekst → <b>Dodaj uwagę</b>. Rysunek albo tabela: <b>▭ Obszar</b> (<kbd>R</kbd>). Cała strona: przycisk w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. Zapis: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Wszystko zapisuje się od razu.",
-    empty: "Brak uwag. Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz prostokątem: <b>▭ Obszar</b> lub klawisz <kbd>R</kbd>.",
-    addNote: "＋ Dodaj uwagę", addPageNote: "＋ uwaga do strony", editorHint: "⌘/Ctrl + Enter zapisuje, Esc anuluje",
+    building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a", tips: "Jak to działa",
+    help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
+    empty: "<b>Brak uwag</b><br>Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b> albo zaznacz rysunek <b>Obszarem</b> (<kbd>R</kbd>).",
+    emptyOpen: "<b>Brak otwartych uwag</b><br>Wszystko zrobione. Przełącz na <b>Wszystkie</b>, aby zobaczyć zrobione i odrzucone.",
+    addNote: "Dodaj uwagę", addPageNote: "Uwaga do strony", editorHint: "<kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje",
+    newNote: "Nowa uwaga", editNote: (n) => `Edycja uwagi #${n}`, status: "Status",
     placeholder: "Co ci się nie podoba i co chcesz zmienić?", cancel: "Anuluj", save: "Zapisz", edit: "Edytuj", del: "Usuń",
-    delAsk: "Usunąć tę uwagę?", saved: "Zapisano", deleted: "Usunięto", notSaved: "Nie zapisano", keptText: "Treść została w okienku.",
+    delAsk: "Usunąć tę uwagę?", delSub: "Tego nie da się cofnąć.", saved: "Zapisano", deleted: "Usunięto", removed: "Usunięto", notSaved: "Nie zapisano", keptText: "Treść została w okienku.",
     kinds: { text: "fragment tekstu", area: "obszar strony", page: "cała strona", general: "uwaga ogólna" },
-    generalShort: "ogólna", areaLabel: "(obszar strony)", pageLabel: "(cała strona)", noText: "(bez notatki)",
+    generalShort: "Ogólna", noText: "Bez notatki",
     oldPdf: "starszy PDF", oldPdfTitle: "Uwaga dodana do starszej wersji PDF-a; zaznaczenie może być przesunięte",
-    st_open: "otwarta", st_done: "zrobiona", st_rejected: "odrzucona", changed: "PDF się zmienił.", reload: "Odśwież",
+    st_open: "Otwarta", st_done: "Zrobiona", st_rejected: "Odrzucona", changed: "PDF się zmienił.", reload: "Odśwież",
     pdfFrom: (d) => `PDF z ${d}`, loadErr: "Nie udało się wczytać", lang: "pl",
   },
 };
@@ -268,7 +504,7 @@ function applyLang() {
   $("lang").value = LANG;
   document.querySelectorAll("[data-t]").forEach((e) => (e.textContent = t(e.dataset.t)));
   document.querySelectorAll("[data-t-html]").forEach((e) => (e.innerHTML = t(e.dataset.tHtml)));
-  document.querySelectorAll("[data-t-title]").forEach((e) => (e.title = t(e.dataset.tTitle)));
+  document.querySelectorAll("[data-t-title]").forEach((e) => { e.title = t(e.dataset.tTitle); e.setAttribute("aria-label", e.title); });
   $("ed-note").placeholder = t("placeholder");
   $("theme").setAttribute("aria-label", t("theme"));
 }
@@ -278,9 +514,42 @@ const $ = (id) => document.getElementById(id);
 const norm = (s) => s.replace(/\s+/g, " ").trim();
 const dehyphen = (s) => s.replace(/(\p{L})- (\p{Ll})/gu, "$1$2");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const icon = (name) => `<svg class="i" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 function toast(msg, err = false) {
-  const el = $("toast"); el.textContent = msg; el.className = err ? "err" : ""; el.hidden = false;
-  clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), err ? 6000 : 2000);
+  const el = $("toast");
+  el.innerHTML = icon(err ? "alert" : "check-circle") + `<span>${esc(msg)}</span>`;
+  el.className = err ? "err" : ""; el.setAttribute("role", err ? "alert" : "status");
+  el.hidden = true; void el.offsetWidth; el.hidden = false;  // restart the animation
+  clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), err ? 6000 : 2200);
+}
+// While a dialog is open the page behind it cannot be focused or clicked.
+function setInert(on) { for (const el of [document.querySelector("header"), $("library"), $("app"), $("addbtn")]) el.inert = on; }
+// A styled replacement for confirm(): resolves to true or false.
+function ask(message, sub, okLabel) {
+  return new Promise((resolve) => {
+    const dlg = $("confirm"), prev = document.activeElement;
+    $("cf-msg").textContent = message;
+    $("cf-sub").textContent = sub || ""; $("cf-sub").hidden = !sub;
+    $("cf-yes").textContent = okLabel; $("cf-no").textContent = t("cancel");
+    dlg.hidden = false; setInert(true);
+    $("cf-yes").focus();
+    const done = (v) => {
+      dlg.hidden = true; setInert(false);
+      document.removeEventListener("keydown", key, true);
+      prev?.focus?.();
+      resolve(v);
+    };
+    // Keys go to the dialog only; Enter and Space activate the focused button.
+    const key = (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); done(false); }
+      else if (e.key === "Tab") { e.preventDefault(); (document.activeElement === $("cf-yes") ? $("cf-no") : $("cf-yes")).focus(); }
+    };
+    $("cf-yes").onclick = () => done(true);
+    $("cf-no").onclick = () => done(false);
+    dlg.onmousedown = (e) => { if (e.target === dlg) { e.preventDefault(); done(false); } };
+    document.addEventListener("keydown", key, true);
+  });
 }
 async function api(method, url, body, raw = false) {
   const opts = { method };
@@ -298,7 +567,7 @@ async function api(method, url, body, raw = false) {
 }
 $("lang").addEventListener("change", (e) => {
   LANG = e.target.value; localStorage.setItem("pdf-notes-lang", LANG); applyLang();
-  if (S.doc) { showMeta(); renderAll(); viewer.dispatchEvent(new Event("scroll")); } else loadLibrary();
+  if (S.doc) { showMeta(); renderAll(); viewer.dispatchEvent(new Event("scroll")); } else if (!S.docId) loadLibrary();
 });
 
 // ---------- theme ----------
@@ -321,6 +590,8 @@ applyTheme();
 
 const params = new URLSearchParams(location.search);
 const S = { docId: params.get("doc"), doc: null, pdf: null, scale: 1, pages: [], notes: [], outline: [], filter: "open", sel: null, pending: null, editing: null };
+// On small screens the notes panel is a drawer over the PDF.
+const narrow = matchMedia("(max-width: 760px)");
 
 // =====================================================================
 // Library
@@ -328,21 +599,29 @@ const S = { docId: params.get("doc"), doc: null, pdf: null, scale: 1, pages: [],
 async function loadLibrary() {
   const docs = await api("GET", "/api/docs");
   const el = $("docs");
-  if (!docs.length) { el.innerHTML = `<div class="empty">${t("noDocs")}</div>`; return; }
+  $("docsn").textContent = docs.length || "";
+  if (!docs.length) { el.innerHTML = `<div class="lib-empty">${t("noDocs")}</div>`; return; }
   docs.sort((a, b) => (b.modified || "").localeCompare(a.modified || ""));
-  el.innerHTML = docs.map((d) => `
+  el.innerHTML = docs.map((d) => {
+    const src = d.exists ? esc(d.kind === "path" ? t("onDisk") : t("uploaded")) : `<span class="missing">${esc(t("missing"))}</span>`;
+    const when = d.modified ? ` · ${esc(d.modified.replace("T", " "))}` : "";
+    return `
     <div class="doc" data-id="${d.id}">
-      <a href="/?doc=${d.id}">${esc(d.name)}</a>
-      <span class="src" title="${esc(d.path || "")}">${d.exists ? (d.kind === "path" ? esc(t("onDisk")) : esc(t("uploaded"))) : esc(t("missing"))}</span>
-      <span class="info">${t("notesN", d.open, d.notes)}</span>
-      <button class="btn danger" data-act="rm" data-kind="${d.kind}" data-name="${esc(d.name)}">${t("remove")}</button>
-    </div>`).join("");
+      <span class="ficon">${icon(d.kind === "path" ? "disk" : "file")}</span>
+      <div class="body">
+        <a href="/?doc=${d.id}">${esc(d.name)}</a>
+        <div class="sub" title="${esc(d.path || "")}">${src}${when}</div>
+      </div>
+      <span class="count" title="${esc(t("notesN", d.open, d.notes))}"><b class="${d.open ? "has" : ""}">${d.open}</b><span class="of">${esc(t("ofN", d.notes))}</span></span>
+      <button class="btn icon ghost danger" data-act="rm" data-kind="${d.kind}" data-name="${esc(d.name)}" title="${esc(t("remove"))}" aria-label="${esc(t("remove"))}">${icon("trash")}</button>
+    </div>`;
+  }).join("");
 }
 $("docs").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act=rm]"); if (!b) return;
-  const id = b.closest(".doc").dataset.id;
-  if (!confirm(b.dataset.kind === "upload" ? t("removeAskUpload", b.dataset.name) : t("removeAsk", b.dataset.name))) return;
-  try { await api("DELETE", `/api/docs/${id}`); loadLibrary(); } catch (err) { toast(err.message, true); }
+  const id = b.closest(".doc").dataset.id, up = b.dataset.kind === "upload";
+  if (!(await ask(up ? t("removeAskUpload", b.dataset.name) : t("removeAsk", b.dataset.name), t(up ? "removeSubUpload" : "removeSub"), t("remove")))) return;
+  try { await api("DELETE", `/api/docs/${id}`); await loadLibrary(); toast(t("removed")); } catch (err) { toast(err.message, true); }
 });
 async function upload(files) {
   const pdfs = [...files].filter((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
@@ -357,7 +636,7 @@ async function upload(files) {
 }
 const drop = $("drop");
 $("pick").addEventListener("click", () => $("file").click());
-$("file").addEventListener("change", (e) => upload(e.target.files));
+$("file").addEventListener("change", (e) => { upload(e.target.files); e.target.value = ""; });
 ["dragenter", "dragover"].forEach((ev) => document.addEventListener(ev, (e) => { if (!S.docId) { e.preventDefault(); drop.classList.add("over"); } }));
 ["dragleave", "drop"].forEach((ev) => document.addEventListener(ev, (e) => { if (!S.docId) { e.preventDefault(); drop.classList.remove("over"); } }));
 document.addEventListener("drop", (e) => { if (!S.docId && e.dataTransfer?.files?.length) upload(e.dataTransfer.files); });
@@ -397,7 +676,7 @@ function sectionAt(page, top) {
 async function openDoc() {
   S.doc = await api("GET", docUrl());
   document.title = `${S.doc.name} · pdf-notes`;
-  $("title").textContent = S.doc.name;
+  $("title").textContent = S.doc.name; $("title").title = S.doc.name;
   showMeta();
   S.pdf = await pdfjsLib.getDocument({ url: docUrl(`/pdf?v=${S.doc.version}`) }).promise;
   for (let i = 1; i <= S.pdf.numPages; i++) {
@@ -406,7 +685,7 @@ async function openDoc() {
     const div = document.createElement("div");
     div.className = "page"; div.dataset.page = i;
     div.innerHTML = `<canvas></canvas><div class="hl-layer"></div><div class="textLayer"></div><div class="pin-layer"></div>
-      <div class="area-layer"></div><button class="btn page-note" data-t="addPageNote">${t("addPageNote")}</button><div class="page-num">${i}</div>`;
+      <div class="area-layer"></div><button class="btn sm page-note" data-t-title="addPageNote" title="${esc(t("addPageNote"))}" aria-label="${esc(t("addPageNote"))}">${icon("plus")}<span data-t="addPageNote">${t("addPageNote")}</span></button><div class="page-num">${i}</div>`;
     pagesEl.appendChild(div);
     const p = { num: i, page, base, div, rendered: false, task: null, text: null };
     S.pages.push(p);
@@ -417,6 +696,7 @@ async function openDoc() {
   setScale(fitScale());
   S.notes = await api("GET", docUrl("/notes"));
   renderAll();
+  viewer.dispatchEvent(new Event("scroll"));
   setInterval(checkChanged, 5000);
 }
 function showMeta() { $("meta").textContent = S.doc.modified ? t("pdfFrom", S.doc.modified.replace("T", " ")) : ""; }
@@ -487,7 +767,7 @@ function currentPage() {
   const mid = viewer.scrollTop + 80;
   for (const p of S.pages) {
     const top = p.div.offsetTop, h = p.div.offsetHeight;
-    if (top + h + 16 > mid) return { num: p.num, frac: Math.max(0, (mid - top) / h) };
+    if (top + h + 30 > mid) return { num: p.num, frac: Math.max(0, (mid - top) / h) };
   }
   return null;
 }
@@ -572,14 +852,17 @@ function context(page, quote) {
   return { prefix: text.slice(Math.max(0, i - 80), i), suffix: text.slice(i + quote.length, i + quote.length + 80) };
 }
 function updateAddBtn() {
-  if (!S.doc || !$("editor").hidden) return;
+  if (!S.doc || !$("editor").hidden || !$("confirm").hidden) return;
   const c = captureSelection();
   S.sel = c;
   if (!c) { addbtn.hidden = true; return; }
-  const a = c.anchor;
+  const a = c.anchor, st = $("stage").getBoundingClientRect();
   addbtn.hidden = false;
-  addbtn.style.top = Math.min(window.innerHeight - 50, a.bottom + 8) + "px";
-  addbtn.style.left = Math.max(8, Math.min(window.innerWidth - 160, a.left + a.width / 2 - 70)) + "px";
+  // Keep the button inside the PDF area, below the selection (or above it near the bottom).
+  const w = addbtn.offsetWidth, h = addbtn.offsetHeight;
+  const below = a.bottom + 8, above = a.top - h - 8;
+  addbtn.style.top = Math.max(st.top + 8, below + h > st.bottom - 8 ? above : below) + "px";
+  addbtn.style.left = Math.max(st.left + 8, Math.min(st.right - w - 8, a.left + a.width / 2 - w / 2)) + "px";
 }
 document.addEventListener("mouseup", () => setTimeout(updateAddBtn, 10));
 document.addEventListener("keyup", () => setTimeout(updateAddBtn, 10));
@@ -592,80 +875,119 @@ document.addEventListener("pointerdown", (e) => { const tl = e.target.closest?.(
 document.addEventListener("pointerup", () => document.querySelectorAll(".textLayer.selecting").forEach((x) => x.classList.remove("selecting")));
 
 // ---------- area ----------
-function setArea(on) { document.body.classList.toggle("area-mode", on); $("areabtn").classList.toggle("on", on); }
+function setArea(on) {
+  document.body.classList.toggle("area-mode", on);
+  $("areabtn").classList.toggle("on", on);
+  $("areabtn").setAttribute("aria-pressed", String(on));
+  if (on) { getSelection()?.removeAllRanges(); addbtn.hidden = true; }
+  else document.querySelectorAll(".drag-rect").forEach((e) => e.remove());
+}
+const inArea = () => document.body.classList.contains("area-mode");
 $("areabtn").addEventListener("click", () => setArea(!document.body.classList.contains("area-mode")));
 function setupArea(p) {
   const layer = p.div.querySelector(".area-layer");
   let start = null, box = null;
-  const pos = (e) => { const b = p.div.getBoundingClientRect(); return { x: (e.clientX - b.left) / b.width, y: (e.clientY - b.top) / b.height }; };
+  const pos = (e) => { const b = p.div.getBoundingClientRect(); return { x: Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)), y: Math.max(0, Math.min(1, (e.clientY - b.top) / b.height)) }; };
   layer.addEventListener("pointerdown", (e) => {
     start = pos(e); layer.setPointerCapture(e.pointerId);
     box = document.createElement("div"); box.className = "drag-rect"; layer.appendChild(box);
   });
   layer.addEventListener("pointermove", (e) => {
-    if (!start) return; const q = pos(e);
+    if (!start) return;
+    if (!inArea()) { start = null; return; }
+    const q = pos(e);
     Object.assign(box.style, { left: Math.min(start.x, q.x) * 100 + "%", top: Math.min(start.y, q.y) * 100 + "%",
       width: Math.abs(q.x - start.x) * 100 + "%", height: Math.abs(q.y - start.y) * 100 + "%" });
   });
-  layer.addEventListener("pointerup", (e) => {
+  const end = (e, cancelled) => {
     if (!start) return; const q = pos(e); box.remove();
     const r = { p: p.num, x: Math.min(start.x, q.x), y: Math.min(start.y, q.y), w: Math.abs(q.x - start.x), h: Math.abs(q.y - start.y) };
     start = null;
-    if (r.w < 0.01 || r.h < 0.01) return;
+    if (cancelled || !inArea() || r.w < 0.01 || r.h < 0.01) return;
     setArea(false);
     const rr = mergeRects([r]);
     openEditor({ kind: "area", page: p.num, top: rr[0].y, rects: rr, quote: "" });
-  });
+  };
+  layer.addEventListener("pointerup", (e) => end(e, false));
+  layer.addEventListener("pointercancel", (e) => end(e, true));
 }
 
 // ---------- editor ----------
+function setEdStatus(v) {
+  S.edStatus = v;
+  document.querySelectorAll("#ed-status button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+}
 function openEditor(item, existing = null) {
   S.pending = item; S.editing = existing;
+  setArea(false); addbtn.hidden = true;
   if (item.page && !existing) item.section = sectionAt(item.page, item.top || 0);
+  $("ed-title").textContent = existing ? t("editNote", noteNumber(existing.id)) : t("newNote");
   $("ed-ctx").textContent = [item.page ? `${t("page")} ${item.page}` : null, item.section || null, t("kinds")[item.kind]].filter(Boolean).join(" · ");
   $("ed-quote").hidden = !item.quote;
   $("ed-quote").textContent = item.quote || "";
-  $("ed-note").value = existing ? existing.note : "";
-  $("ed-status").hidden = !existing;
-  if (existing) $("ed-status").value = existing.status;
-  $("editor").hidden = false;
-  setTimeout(() => $("ed-note").focus(), 0);
+  $("ed-note").value = S.edInitial = existing ? existing.note : "";
+  $("ed-status-row").hidden = !existing;
+  setEdStatus(existing ? existing.status : "open");
+  S.edReturn = document.activeElement;
+  $("editor").hidden = false; setInert(true);
+  setTimeout(() => { const ta = $("ed-note"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
 }
-function closeEditor() { $("editor").hidden = true; S.pending = S.editing = null; }
+function closeEditor() {
+  $("editor").hidden = true; setInert(false); S.pending = S.editing = null;
+  if (S.edReturn?.isConnected) S.edReturn.focus({ preventScroll: true });
+  S.edReturn = null;
+}
 async function saveEditor() {
+  if (S.saving) return;
   const note = $("ed-note").value.trim();
+  S.saving = true; $("ed-save").disabled = true;
   try {
     if (S.editing) {
-      const n = await api("PUT", docUrl(`/notes/${S.editing.id}`), { note, status: $("ed-status").value });
+      const n = await api("PUT", docUrl(`/notes/${S.editing.id}`), { note, status: S.edStatus });
       S.notes = S.notes.map((x) => (x.id === n.id ? n : x));
     } else {
       const { anchor, ...body } = S.pending;
-      S.notes.push(await api("POST", docUrl("/notes"), { ...body, note }));
+      const n = await api("POST", docUrl("/notes"), { ...body, note });
+      S.notes.push(n);
       getSelection().removeAllRanges();
+      S.justAdded = n.id;
     }
     closeEditor(); renderAll(); toast(t("saved"));
+    if (S.justAdded) { selectCard(S.justAdded, true); S.justAdded = null; }
   } catch (e) { toast(`${t("notSaved")}: ${e.message}. ${t("keptText")}`, true); }
+  finally { S.saving = false; $("ed-save").disabled = false; }
 }
 $("ed-save").addEventListener("click", saveEditor);
 $("ed-cancel").addEventListener("click", closeEditor);
-$("editor").addEventListener("mousedown", (e) => { if (e.target.id === "editor") closeEditor(); });
+$("ed-close").addEventListener("click", closeEditor);
+$("ed-status").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setEdStatus(b.dataset.v); });
+// A click outside the dialog closes it only when nothing would be lost.
+$("editor").addEventListener("mousedown", (e) => {
+  if (e.target.id !== "editor") return;
+  if ($("ed-note").value === S.edInitial) closeEditor(); else { e.preventDefault(); $("ed-note").focus(); }
+});
 document.addEventListener("keydown", (e) => {
   if (!S.doc) return;
   const open = !$("editor").hidden;
   if (open && e.key === "Escape") closeEditor();
-  else if (open && e.key === "Enter" && (e.metaKey || e.ctrlKey)) saveEditor();
+  else if (open && e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEditor(); }
   else if (!open && !e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "r" || e.key === "R") && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))
     setArea(!document.body.classList.contains("area-mode"));
-  else if (!open && e.key === "Escape") setArea(false);
+  else if (!open && e.key === "Escape") {
+    if (document.body.classList.contains("area-mode")) setArea(false);
+    else if (narrow.matches && !document.body.classList.contains("side-hidden")) setSide(false);
+  }
 });
 $("general").addEventListener("click", () => openEditor({ kind: "general", page: null, top: 0, rects: [], quote: "" }));
 
 // ---------- list and highlights ----------
 const order = (a, b) => (a.page ?? 1e9) - (b.page ?? 1e9) || (a.top || 0) - (b.top || 0) || a.created.localeCompare(b.created);
+const noteNumber = (id) => [...S.notes].sort(order).findIndex((n) => n.id === id) + 1;
 function renderAll() {
   if (!S.doc) return;
   const all = [...S.notes].sort(order);
   const num = new Map(all.map((n, i) => [n.id, i + 1]));
+  const selId = document.querySelector(".card.sel")?.dataset.id;
   for (const p of S.pages) { p.div.querySelector(".hl-layer").innerHTML = ""; p.div.querySelector(".pin-layer").innerHTML = ""; p.pinYs = []; }
   const shown = all.filter((n) => S.filter === "all" || n.status === "open");
   for (const n of shown) {
@@ -680,20 +1002,30 @@ function renderAll() {
     }
     if (n.kind === "page" && S.pages[n.page - 1]) addPin(S.pages[n.page - 1], n, num.get(n.id), 0.01);
   }
-  $("count").textContent = t("notesN", S.notes.filter((n) => n.status === "open").length, S.notes.length);
+  const openCount = S.notes.filter((n) => n.status === "open").length;
+  $("n-open").textContent = openCount; $("n-all").textContent = S.notes.length;
+  $("sidecount").textContent = openCount; $("sidecount").hidden = !openCount;
+  document.querySelectorAll("#filter button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === S.filter)));
   const list = $("list");
-  if (!shown.length) { list.innerHTML = `<div class="empty">${t("empty")}</div>`; return; }
+  if (!shown.length) {
+    list.innerHTML = `<div class="empty"><div class="ill">${icon(S.notes.length ? "check" : "chat")}</div>${t(S.notes.length ? "emptyOpen" : "empty")}</div>`;
+    return;
+  }
   list.innerHTML = shown.map((n) => `
-    <div class="card ${n.status}" data-id="${n.id}">
-      <div class="head"><span class="no">#${num.get(n.id)}</span>
-        <span>${n.page ? t("pageShort") + " " + n.page : t("generalShort")}</span>
-        <span class="sec">${esc(n.section || "")}</span>
+    <div class="card ${n.status}${n.id === selId ? " sel" : ""}" data-id="${n.id}">
+      <div class="head"><span class="no">${num.get(n.id)}</span>
+        <span class="where">${n.page ? t("pageShort") + " " + n.page : t("generalShort")}</span>
+        <span class="sec" title="${esc(n.section || "")}">${esc(n.section || "")}</span>
         ${n.pdfVersion && n.pdfVersion !== S.doc.version ? `<span class="chip old" title="${esc(t("oldPdfTitle"))}">${t("oldPdf")}</span>` : ""}
         ${n.status !== "open" ? `<span class="chip ${n.status}">${t("st_" + n.status)}</span>` : ""}
       </div>
-      ${n.quote ? `<div class="quote">${esc(n.quote)}</div>` : n.kind === "area" ? `<div class="quote">${t("areaLabel")}</div>` : n.kind === "page" ? `<div class="quote">${t("pageLabel")}</div>` : ""}
-      <div class="note">${esc(n.note || "") || `<span style="color:var(--muted)">${t("noText")}</span>`}</div>
-      <div class="acts"><button class="btn" data-act="edit">${t("edit")}</button><button class="btn danger" data-act="del">${t("del")}</button></div>
+      ${n.quote ? `<div class="quote">${esc(n.quote)}</div>` : n.kind === "area" ? `<div class="kind">${icon("area")}${t("kinds").area}</div>` : n.kind === "page" ? `<div class="kind">${icon("page")}${t("kinds").page}</div>` : ""}
+      <div class="note">${esc(n.note || "") || `<span class="none">${t("noText")}</span>`}</div>
+      <div class="acts">
+        <span class="spacer"></span>
+        <button class="btn ghost sm" data-act="edit">${icon("edit")}${t("edit")}</button>
+        <button class="btn ghost sm icon danger" data-act="del" title="${esc(t("del"))}" aria-label="${esc(t("del"))}">${icon("trash")}</button>
+      </div>
     </div>`).join("");
 }
 function addPin(p, n, no, y) {
@@ -703,7 +1035,7 @@ function addPin(p, n, no, y) {
   p.pinYs.push(y);
   const pin = document.createElement("div");
   pin.className = `pin ${n.status}`; pin.textContent = no; pin.style.top = y * 100 + "%"; pin.title = n.note || "";
-  pin.addEventListener("click", () => { document.body.classList.remove("side-hidden"); selectCard(n.id, true); flash(n.id); });
+  pin.addEventListener("click", () => { setSide(true); selectCard(n.id, true); flash(n.id); });
   p.div.querySelector(".pin-layer").appendChild(pin);
 }
 // Clicking marked text (or inside a marked area) opens its note in the list.
@@ -732,7 +1064,7 @@ viewer.addEventListener("click", (e) => {
     if (link) followLink(link).catch(console.error);
     return;
   }
-  document.body.classList.remove("side-hidden");
+  setSide(true);
   selectCard(id, true);
   flash(id);
 });
@@ -762,21 +1094,27 @@ function selectCard(id, scrollList) {
 $("list").addEventListener("click", async (e) => {
   const card = e.target.closest(".card"); if (!card) return;
   const n = S.notes.find((x) => x.id === card.dataset.id);
-  const act = e.target.dataset.act;
+  const act = e.target.closest("[data-act]")?.dataset.act;
   if (act === "edit") return openEditor({ ...n }, n);
   if (act === "del") {
-    if (!confirm(t("delAsk"))) return;
+    if (!(await ask(t("delAsk"), t("delSub"), t("del")))) return;
     try { await api("DELETE", docUrl(`/notes/${n.id}`)); S.notes = S.notes.filter((x) => x.id !== n.id); renderAll(); toast(t("deleted")); }
     catch (err) { toast(err.message, true); }
     return;
   }
   selectCard(n.id, false);
   if (n.page) {
+    if (narrow.matches) setSide(false);
     scrollToPage(n.page, n.top || 0);
     flash(n.id);
   }
 });
-$("filter").addEventListener("change", (e) => { S.filter = e.target.value; renderAll(); });
+$("list").addEventListener("dblclick", (e) => {
+  const card = e.target.closest(".card"); if (!card || e.target.closest("[data-act]")) return;
+  const n = S.notes.find((x) => x.id === card.dataset.id);
+  if (n) openEditor({ ...n }, n);
+});
+$("filter").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { S.filter = b.dataset.filter; renderAll(); } });
 
 // ---------- export ----------
 $("copymd").addEventListener("click", async () => {
@@ -804,7 +1142,7 @@ async function exportPdf() {
   const notes = [...S.notes].sort(order).filter((n) => S.filter === "all" || n.status === "open");
   for (const n of notes) {
     const color = COLORS[n.status] || COLORS.open;
-    const text = (n.note || "") + (n.status !== "open" ? `\n[${t("st_" + n.status)}]` : "");
+    const text = (n.note || "") + (n.status !== "open" ? `\n[${t("st_" + n.status).toLowerCase()}]` : "");
     // No /T (author): viewers would show it as a title above every note.
     const common = { Contents: PDFHexString.fromText(text), NM: PDFHexString.fromText(n.id), M: PDFString.fromDate(new Date(n.updated || n.created)), C: color, F: 4 };
     if (n.kind === "text" || n.kind === "area") {
@@ -847,15 +1185,22 @@ async function exportPdf() {
 }
 
 // ---------- toolbar ----------
+function setSide(show) {
+  document.body.classList.toggle("side-hidden", !show);
+  $("sidebtn").setAttribute("aria-pressed", String(show));
+  if (show) addbtn.hidden = true;
+}
 $("zoomin").addEventListener("click", () => setScale(S.scale * 1.15));
 $("zoomout").addEventListener("click", () => setScale(S.scale / 1.15));
-$("fit").addEventListener("click", () => setScale(fitScale()));
-$("sidebtn").addEventListener("click", () => document.body.classList.toggle("side-hidden"));
+$("zoomval").addEventListener("click", () => setScale(fitScale()));
+$("sidebtn").addEventListener("click", () => setSide(document.body.classList.contains("side-hidden")));
+$("sideclose").addEventListener("click", () => setSide(false));
 
 // ---------- start ----------
 applyLang();
 if (S.docId) {
-  $("app").hidden = false; $("homelink").hidden = false; $("viewertools").hidden = false;
+  $("app").hidden = false; $("homelink").hidden = false; $("viewertools").hidden = false; $("titlebox").hidden = false; $("brand").hidden = true;
+  setSide(!narrow.matches);
   openDoc().catch((e) => { console.error(e); toast(`${t("loadErr")}: ${e.message}`, true); });
 } else {
   $("library").hidden = false;
