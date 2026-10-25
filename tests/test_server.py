@@ -83,7 +83,7 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(status, 400)
 
     def test_path_document_uses_external_notes_and_snapshots(self):
-        pdf = self.root / "thesis.pdf"
+        pdf = self.root / "paper.pdf"
         pdf.write_bytes(PDF)
         notes = self.root / "review" / "notes.json"
         snaps = self.root / "snapshots"

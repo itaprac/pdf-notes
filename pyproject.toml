@@ -3,6 +3,7 @@ name = "pdf-notes"
 version = "0.1.0"
 description = "Mark up PDFs in the browser and collect notes as JSON and Markdown"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = []
 

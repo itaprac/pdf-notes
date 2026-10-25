@@ -106,7 +106,7 @@ PYTHONPATH=src python3 -m unittest discover -s tests
 
 ## Licence
 
-Bundled libraries:
+MIT, see [LICENSE](LICENSE). Bundled libraries:
 
 - pdf.js 4.10.38 (`src/pdf_notes/static/vendor/pdfjs`), © Mozilla and
   contributors, Apache License 2.0.
