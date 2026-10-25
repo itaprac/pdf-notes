@@ -90,8 +90,9 @@
   .card .note { white-space: pre-wrap; }
   .card .acts { display: flex; gap: 6px; margin-top: 7px; }
   .card .acts .btn { font-size: 12px; padding: 1px 8px; }
-  .export { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; }
-  .export .btn { flex: 1; font-size: 13px; }
+  .export { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; }
+  .export .btn { flex: 1 1 40%; font-size: 13px; }
+  .export .btn.wide { flex-basis: 100%; }
   .help { font-size: 12px; color: var(--muted); padding: 0 12px 10px; }
   #editor { position: fixed; inset: 0; background: rgba(0,0,0,.25); z-index: 100; display: flex; align-items: center; justify-content: center; }
   #editor .box { width: min(560px, 92vw); background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
@@ -151,6 +152,7 @@
     <div class="export">
       <button class="btn" id="copymd" data-t="copyMd"></button>
       <button class="btn" id="dlmd" data-t="downloadMd"></button>
+      <button class="btn wide" id="dlpdf" data-t="downloadPdf" data-t-title="downloadPdfTitle"></button>
     </div>
     <div class="help" data-t-html="help"></div>
   </aside>
@@ -189,6 +191,8 @@ const STR = {
     zoomIn: "Zoom in", zoomOut: "Zoom out", fitWidth: "Fit width", area: "▭ Area", areaTitle: "Mark a rectangular area, e.g. a figure (key R)",
     toggleList: "Show/hide notes", page: "page", pageShort: "p.", filterOpen: "Open", filterAll: "All", general: "＋ General",
     copyMd: "Copy as Markdown", downloadMd: "Download .md", copied: "Notes copied to clipboard",
+    downloadPdf: "Download PDF with notes", downloadPdfTitle: "The PDF with highlights and notes as annotations (Preview, Acrobat, …). Exports the notes shown in the list.",
+    building: "Building PDF…", pdfFailed: "Could not build the PDF",
     help: "Select text → <b>Add note</b>. Figure or table: <b>▭ Area</b> (<kbd>R</kbd>). Whole page: button in the page corner. Save: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Everything is saved immediately.",
     empty: "No notes yet. Select a passage in the PDF and click <b>Add note</b>. Mark a figure or table with <b>▭ Area</b> or the <kbd>R</kbd> key.",
     addNote: "＋ Add note", addPageNote: "＋ note on page", editorHint: "⌘/Ctrl + Enter saves, Esc cancels",
@@ -208,6 +212,8 @@ const STR = {
     zoomIn: "Powiększ", zoomOut: "Pomniejsz", fitWidth: "Dopasuj do szerokości", area: "▭ Obszar", areaTitle: "Zaznacz prostokątem obszar strony, np. rysunek (klawisz R)",
     toggleList: "Pokaż/ukryj listę", page: "strona", pageShort: "s.", filterOpen: "Otwarte", filterAll: "Wszystkie", general: "＋ Ogólna",
     copyMd: "Kopiuj jako Markdown", downloadMd: "Pobierz .md", copied: "Uwagi skopiowane do schowka",
+    downloadPdf: "Pobierz PDF z uwagami", downloadPdfTitle: "PDF z zakreśleniami i notatkami jako adnotacjami (Podgląd, Acrobat, …). Eksportuje uwagi widoczne na liście.",
+    building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a",
     help: "Zaznacz tekst → <b>Dodaj uwagę</b>. Rysunek albo tabela: <b>▭ Obszar</b> (<kbd>R</kbd>). Cała strona: przycisk w rogu strony. Zapis: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Wszystko zapisuje się od razu.",
     empty: "Brak uwag. Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz prostokątem: <b>▭ Obszar</b> lub klawisz <kbd>R</kbd>.",
     addNote: "＋ Dodaj uwagę", addPageNote: "＋ uwaga do strony", editorHint: "⌘/Ctrl + Enter zapisuje, Esc anuluje",
@@ -641,6 +647,64 @@ $("copymd").addEventListener("click", async () => {
   } catch (e) { toast(e.message, true); }
 });
 $("dlmd").addEventListener("click", () => { location.href = docUrl("/export.md?download=1"); });
+$("dlpdf").addEventListener("click", () => exportPdf().catch((e) => { console.error(e); toast(`${t("pdfFailed")}: ${e.message}`, true); }));
+
+// Writes the notes into a copy of the PDF as standard annotations:
+// highlights for text, rectangles for areas, sticky notes for pages and general notes.
+async function exportPdf() {
+  toast(t("building"));
+  const { PDFDocument, PDFHexString, PDFString } = await import("/static/vendor/pdf-lib/pdf-lib.esm.min.js");
+  const bytes = await (await fetch(docUrl(`/pdf?v=${S.doc.version}`))).arrayBuffer();
+  const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
+  const ctx = pdf.context, pages = pdf.getPages();
+  const gs = ctx.register(ctx.obj({ Type: "ExtGState", BM: "Multiply", CA: 0.45, ca: 0.45 }));
+  const COLORS = { open: [1, 0.8, 0], done: [0.2, 0.68, 0.35], rejected: [0.6, 0.6, 0.6] };
+  const pt = (p) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`;
+  const stickies = {};
+  const notes = [...S.notes].sort(order).filter((n) => S.filter === "all" || n.status === "open");
+  for (const n of notes) {
+    const color = COLORS[n.status] || COLORS.open;
+    const text = (n.note || "") + (n.status !== "open" ? `\n[${t("st_" + n.status)}]` : "");
+    const common = { Contents: PDFHexString.fromText(text), T: PDFHexString.fromText("pdf-notes"),
+      NM: PDFHexString.fromText(n.id), M: PDFString.fromDate(new Date(n.updated || n.created)), C: color, F: 4 };
+    if (n.kind === "text" || n.kind === "area") {
+      const byPage = new Map();
+      for (const r of n.rects || []) byPage.set(r.p, [...(byPage.get(r.p) || []), r]);
+      for (const [num, rects] of byPage) {
+        const view = S.pages[num - 1]?.base, page = pages[num - 1];
+        if (!view || !page) continue;
+        // corners in PDF user space, ordered top-left, top-right, bottom-left, bottom-right
+        const quads = rects.map((r) => [[r.x, r.y], [r.x + r.w, r.y], [r.x, r.y + r.h], [r.x + r.w, r.y + r.h]]
+          .map(([x, y]) => view.convertToPdfPoint(x * view.width, y * view.height)));
+        const xs = quads.flat().map((q) => q[0]), ys = quads.flat().map((q) => q[1]);
+        const rect = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+        let dict, ap;
+        if (n.kind === "text") {
+          ap = `/GS0 gs ${color.join(" ")} rg ` + quads.map(([a, b, c, d]) => `${pt(a)} m ${pt(b)} l ${pt(d)} l ${pt(c)} l h`).join(" ") + " f";
+          dict = { Type: "Annot", Subtype: "Highlight", Rect: rect, QuadPoints: quads.flat(2), CA: 0.45, ...common };
+        } else {
+          const [x0, y0, x1, y1] = rect;
+          ap = `${color.join(" ")} RG 2 w ${x0 + 1} ${y0 + 1} ${x1 - x0 - 2} ${y1 - y0 - 2} re S`;
+          dict = { Type: "Annot", Subtype: "Square", Rect: rect, BS: { W: 2 }, ...common };
+        }
+        const stream = ctx.stream(ap, { Type: "XObject", Subtype: "Form", BBox: rect, Resources: { ExtGState: { GS0: gs } } });
+        dict.AP = { N: ctx.register(stream) };
+        page.node.addAnnot(ctx.register(ctx.obj(dict)));
+      }
+    } else {
+      const num = n.page || 1, view = S.pages[num - 1].base;
+      const k = (stickies[num] = (stickies[num] || 0) + 1);
+      const [x, y] = view.convertToPdfPoint(view.width - 30, 10 + (k - 1) * 24);
+      pages[num - 1].node.addAnnot(ctx.register(ctx.obj({ Type: "Annot", Subtype: "Text", Name: "Comment", Open: false, Rect: [x, y - 20, x + 20, y], ...common })));
+    }
+  }
+  const out = await pdf.save();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([out], { type: "application/pdf" }));
+  a.download = S.doc.name.replace(/\.pdf$/i, "") + "-notes.pdf";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
 
 // ---------- toolbar ----------
 $("zoomin").addEventListener("click", () => setScale(S.scale * 1.15));

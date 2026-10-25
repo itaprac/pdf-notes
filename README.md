@@ -11,10 +11,13 @@ agent read the files directly.
   quoted text with 80 characters of context on each side, and its status
   (`open`, `done`, `rejected`).
 - **Copy as Markdown** / **Download .md** exports all notes in reading order.
+- **Download PDF with notes** writes the notes into a copy of the PDF as
+  standard annotations (highlights, rectangles, sticky notes), readable in
+  Preview, Acrobat and other viewers. It exports the notes shown in the list.
 - Upload PDFs by drag and drop, or open a PDF on disk. A PDF on disk is
   served live: when it is rebuilt (e.g. by LaTeX), the page offers a reload.
 - English and Polish interface.
-- Python 3.9+ standard library only; pdf.js is bundled.
+- Python 3.9+ standard library only; pdf.js and pdf-lib are bundled.
 
 ## Run
 
@@ -103,5 +106,9 @@ PYTHONPATH=src python3 -m unittest discover -s tests
 
 ## Licence
 
-pdf.js (`src/pdf_notes/static/vendor/pdfjs`, version 4.10.38) is © Mozilla
-and contributors, Apache License 2.0.
+Bundled libraries:
+
+- pdf.js 4.10.38 (`src/pdf_notes/static/vendor/pdfjs`), © Mozilla and
+  contributors, Apache License 2.0.
+- pdf-lib 1.17.1 (`src/pdf_notes/static/vendor/pdf-lib`), © Andrew Dillon,
+  MIT License.
