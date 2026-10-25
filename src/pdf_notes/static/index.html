@@ -705,8 +705,8 @@ async function exportPdf() {
   for (const n of notes) {
     const color = COLORS[n.status] || COLORS.open;
     const text = (n.note || "") + (n.status !== "open" ? `\n[${t("st_" + n.status)}]` : "");
-    const common = { Contents: PDFHexString.fromText(text), T: PDFHexString.fromText("pdf-notes"),
-      NM: PDFHexString.fromText(n.id), M: PDFString.fromDate(new Date(n.updated || n.created)), C: color, F: 4 };
+    // No /T (author): viewers would show it as a title above every note.
+    const common = { Contents: PDFHexString.fromText(text), NM: PDFHexString.fromText(n.id), M: PDFString.fromDate(new Date(n.updated || n.created)), C: color, F: 4 };
     if (n.kind === "text" || n.kind === "area") {
       const byPage = new Map();
       for (const r of n.rects || []) byPage.set(r.p, [...(byPage.get(r.p) || []), r]);
