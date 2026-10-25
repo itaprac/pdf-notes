@@ -56,6 +56,7 @@
   .hl.done { background: var(--hl-done); } .hl.area.done { border-color: rgba(40,170,90,.8); background: transparent; }
   .hl.rejected { background: var(--hl-rej); } .hl.area.rejected { border-color: #aaa; background: transparent; }
   .hl.flash { animation: flash 1.2s ease 2; }
+  .page.over-note .textLayer span { cursor: pointer; }
   @keyframes flash { 50% { background: rgba(10, 102, 216, .45); } }
   .pin { position: absolute; right: -30px; transform: translateY(-2px); pointer-events: auto; cursor: pointer;
          min-width: 22px; height: 22px; border-radius: 11px; background: #f5b400; color: #000; font-size: 11px; font-weight: 700;
@@ -193,7 +194,7 @@ const STR = {
     copyMd: "Copy as Markdown", downloadMd: "Download .md", copied: "Notes copied to clipboard",
     downloadPdf: "Download PDF with notes", downloadPdfTitle: "The PDF with highlights and notes as annotations (Preview, Acrobat, …). Exports the notes shown in the list.",
     building: "Building PDF…", pdfFailed: "Could not build the PDF",
-    help: "Select text → <b>Add note</b>. Figure or table: <b>▭ Area</b> (<kbd>R</kbd>). Whole page: button in the page corner. Save: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Everything is saved immediately.",
+    help: "Select text → <b>Add note</b>. Figure or table: <b>▭ Area</b> (<kbd>R</kbd>). Whole page: button in the page corner. Click marked text to open its note. Save: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Everything is saved immediately.",
     empty: "No notes yet. Select a passage in the PDF and click <b>Add note</b>. Mark a figure or table with <b>▭ Area</b> or the <kbd>R</kbd> key.",
     addNote: "＋ Add note", addPageNote: "＋ note on page", editorHint: "⌘/Ctrl + Enter saves, Esc cancels",
     placeholder: "What is wrong here and what should change?", cancel: "Cancel", save: "Save", edit: "Edit", del: "Delete",
@@ -214,7 +215,7 @@ const STR = {
     copyMd: "Kopiuj jako Markdown", downloadMd: "Pobierz .md", copied: "Uwagi skopiowane do schowka",
     downloadPdf: "Pobierz PDF z uwagami", downloadPdfTitle: "PDF z zakreśleniami i notatkami jako adnotacjami (Podgląd, Acrobat, …). Eksportuje uwagi widoczne na liście.",
     building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a",
-    help: "Zaznacz tekst → <b>Dodaj uwagę</b>. Rysunek albo tabela: <b>▭ Obszar</b> (<kbd>R</kbd>). Cała strona: przycisk w rogu strony. Zapis: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Wszystko zapisuje się od razu.",
+    help: "Zaznacz tekst → <b>Dodaj uwagę</b>. Rysunek albo tabela: <b>▭ Obszar</b> (<kbd>R</kbd>). Cała strona: przycisk w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. Zapis: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Wszystko zapisuje się od razu.",
     empty: "Brak uwag. Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz prostokątem: <b>▭ Obszar</b> lub klawisz <kbd>R</kbd>.",
     addNote: "＋ Dodaj uwagę", addPageNote: "＋ uwaga do strony", editorHint: "⌘/Ctrl + Enter zapisuje, Esc anuluje",
     placeholder: "Co ci się nie podoba i co chcesz zmienić?", cancel: "Anuluj", save: "Zapisz", edit: "Edytuj", del: "Usuń",
@@ -611,8 +612,47 @@ function addPin(p, n, no, y) {
   p.pinYs.push(y);
   const pin = document.createElement("div");
   pin.className = `pin ${n.status}`; pin.textContent = no; pin.style.top = y * 100 + "%"; pin.title = n.note || "";
-  pin.addEventListener("click", () => selectCard(n.id, true));
+  pin.addEventListener("click", () => { document.body.classList.remove("side-hidden"); selectCard(n.id, true); flash(n.id); });
   p.div.querySelector(".pin-layer").appendChild(pin);
+}
+// Clicking marked text (or inside a marked area) opens its note in the list.
+function noteAt(pageDiv, clientX, clientY) {
+  const b = pageDiv.getBoundingClientRect(), num = +pageDiv.dataset.page;
+  const x = (clientX - b.left) / b.width, y = (clientY - b.top) / b.height;
+  let best = null;
+  for (const n of S.notes) {
+    if (S.filter !== "all" && n.status !== "open") continue;
+    for (const r of n.rects || []) {
+      if (r.p !== num || x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) continue;
+      const area = r.w * r.h; // the smallest mark wins when marks overlap
+      if (!best || area < best.area) best = { id: n.id, area };
+    }
+  }
+  return best?.id || null;
+}
+viewer.addEventListener("click", (e) => {
+  if (document.body.classList.contains("area-mode") || e.target.closest("button, .pin")) return;
+  const sel = getSelection();
+  if (sel && !sel.isCollapsed && norm(sel.toString())) return;  // the user is selecting text
+  const pageDiv = e.target.closest(".page");
+  const id = pageDiv && noteAt(pageDiv, e.clientX, e.clientY);
+  if (!id) return;
+  document.body.classList.remove("side-hidden");
+  selectCard(id, true);
+  flash(id);
+});
+let hoverRaf = 0;
+viewer.addEventListener("mousemove", (e) => {
+  if (hoverRaf) return;
+  hoverRaf = requestAnimationFrame(() => {
+    hoverRaf = 0;
+    const pageDiv = e.target.closest?.(".page");
+    document.querySelectorAll(".page.over-note").forEach((p) => p !== pageDiv && p.classList.remove("over-note"));
+    if (pageDiv) pageDiv.classList.toggle("over-note", !!noteAt(pageDiv, e.clientX, e.clientY));
+  });
+});
+function flash(id) {
+  document.querySelectorAll(`.hl[data-id="${id}"]`).forEach((h) => { h.classList.remove("flash"); void h.offsetWidth; h.classList.add("flash"); });
 }
 function selectCard(id, scrollList) {
   document.querySelectorAll(".card.sel").forEach((c) => c.classList.remove("sel"));
@@ -633,7 +673,7 @@ $("list").addEventListener("click", async (e) => {
   selectCard(n.id, false);
   if (n.page) {
     scrollToPage(n.page, n.top || 0);
-    document.querySelectorAll(`.hl[data-id="${n.id}"]`).forEach((h) => { h.classList.remove("flash"); void h.offsetWidth; h.classList.add("flash"); });
+    flash(n.id);
   }
 });
 $("filter").addEventListener("change", (e) => { S.filter = e.target.value; renderAll(); });
