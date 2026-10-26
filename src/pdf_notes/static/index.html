@@ -106,7 +106,9 @@
   header .spacer { flex: 1; }
   header .divider { width: 1px; height: 22px; background: var(--line); margin: 0 2px; }
   .tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  #pageind { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 62px; text-align: right; }
+  #pageind { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #pagenum { width: 4ch; height: var(--ctl); padding: 0 3px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--raised); color: var(--ink); text-align: center; font: inherit; appearance: textfield; -moz-appearance: textfield; }
+  #pagenum::-webkit-inner-spin-button, #pagenum::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   #zoomval { min-width: 50px; padding: 0 4px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
   #theme .sun, :root[data-theme="dark"] #theme .moon { display: none; }
   :root[data-theme="dark"] #theme .sun { display: block; }
@@ -147,6 +149,17 @@
 
   /* viewer */
   #app { position: absolute; top: var(--head); left: 0; right: 0; bottom: 0; display: flex; }
+  #thumbnails { width: 180px; flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--line); }
+  #thumbnails .top { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  #thumbnails h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  #thumbs { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 12px; }
+  .thumbnail { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; margin-bottom: 12px; padding: 7px; border: 1px solid transparent; border-radius: var(--radius); background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .thumbnail:hover { background: var(--hover); }
+  .thumbnail[aria-current="page"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .thumb-paper { position: relative; display: block; background: #fff; box-shadow: var(--shadow); }
+  .thumb-paper canvas { display: block; width: 100%; height: 100%; }
+  :root[data-theme="dark"] .thumb-paper { background: #1a1a1a; }
+  :root[data-theme="dark"] .thumb-paper canvas { filter: invert(.9) hue-rotate(180deg); }
   #stage { flex: 1; position: relative; min-width: 0; }
   #viewer { position: absolute; inset: 0; overflow: auto; padding: 24px 0 40vh; }
   #pages { display: flex; flex-direction: column; align-items: center; gap: 30px; }
@@ -282,8 +295,9 @@
 
   body.side-hidden #side { display: none; }
   @media (max-width: 1100px) { :root { --side: 330px; } }
-  @media (max-width: 900px) { #pageind { display: none; } }
+  @media (max-width: 900px) { #pageind label { display: none; } }
   @media (max-width: 760px) {
+    #thumbnails { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: var(--shadow-lg); }
     /* the notes panel becomes a drawer over the PDF */
     #side { position: absolute; top: 0; right: 0; bottom: 0; z-index: 40; width: min(420px, 100%); box-shadow: var(--shadow-lg); animation: slide .18s ease-out; }
     #sideclose { display: inline-flex; }
@@ -309,6 +323,7 @@
   <symbol id="i-fit" viewBox="0 0 24 24"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></symbol>
   <symbol id="i-area" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
   <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+  <symbol id="i-thumbnails" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16M6 8h1M6 12h1M6 16h1"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6M18.5 6l-.9 13.1A2 2 0 0 1 15.6 21H8.4a2 2 0 0 1-2-1.9L5.5 6M10 11v6M14 11v6"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
@@ -330,14 +345,15 @@
 
 <header>
   <a class="brand" href="/" id="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="2" width="24" height="28" rx="5" fill="#2563eb"/><rect x="9" y="10" width="14" height="3" rx="1.5" fill="#ffc83d"/><rect x="9" y="17" width="10" height="2.4" rx="1.2" fill="#fff"/><rect x="9" y="22" width="12" height="2.4" rx="1.2" fill="#fff"/></svg>pdf-notes</a>
-  <a class="btn ghost" href="/" id="homelink" hidden data-t-title="library"><svg class="i"><use href="#i-back"/></svg><span class="lbl" data-t="libraryShort"></span></a>
+  <a class="btn icon ghost" href="/" id="homelink" hidden data-t-title="library"><svg class="i" aria-hidden="true"><use href="#i-back"/></svg></a>
+  <button class="btn icon" id="thumbbtn" hidden data-t-title="toggleThumbnails" aria-controls="thumbnails" aria-expanded="false"><svg class="i" aria-hidden="true"><use href="#i-thumbnails"/></svg></button>
   <div class="titlebox" id="titlebox" hidden>
     <h1 id="title"></h1>
     <span class="meta" id="meta"></span>
   </div>
   <span class="spacer"></span>
   <div class="tools" id="viewertools" hidden>
-    <span id="pageind"></span>
+    <form id="pageind"><label for="pagenum" data-t="page"></label><input id="pagenum" type="number" min="1" step="1" required disabled data-t-title="page" inputmode="numeric"><span aria-hidden="true">/ <span id="pagetotal"></span></span></form>
     <div class="group" id="zoomgroup">
       <button class="btn icon" id="zoomout" data-t-title="zoomOut"><svg class="i"><use href="#i-minus"/></svg></button>
       <span class="sep"></span>
@@ -374,6 +390,10 @@
 </section>
 
 <main id="app" hidden>
+  <nav id="thumbnails" aria-labelledby="thumb-title" hidden>
+    <div class="top"><h2 id="thumb-title" data-t="thumbnailsTitle"></h2><button class="btn icon ghost sm" id="thumbclose" data-t-title="close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div id="thumbs"></div>
+  </nav>
   <div id="stage">
     <div id="viewer"><div id="pages"></div></div>
     <div id="areahint" class="float" role="status"><svg class="i"><use href="#i-area"/></svg><span data-t-html="areaHint"></span></div>
@@ -441,6 +461,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/vendor/pdfjs/pdf.worker.min.mj
 // ---------- i18n ----------
 const STR = {
   en: {
+    toggleThumbnails: "Show/hide page thumbnails", thumbnailsTitle: "Pages",
     theme: "Dark theme",
     library: "Back to the library", libraryShort: "Library", dropTitle: "Drop PDF files here", dropSub: "or pick them from your computer", choose: "Choose PDF…",
     docsTitle: "Documents", noDocs: "No documents yet. Add a PDF above to start.",
@@ -469,6 +490,7 @@ const STR = {
     pdfFrom: (d) => `PDF from ${d}`, loadErr: "Could not load", lang: "en",
   },
   pl: {
+    toggleThumbnails: "Pokaż/ukryj miniatury stron", thumbnailsTitle: "Strony",
     theme: "Ciemny motyw",
     library: "Wróć do biblioteki", libraryShort: "Biblioteka", dropTitle: "Upuść tutaj pliki PDF", dropSub: "albo wybierz je z dysku", choose: "Wybierz PDF…",
     docsTitle: "Dokumenty", noDocs: "Nie ma jeszcze dokumentów. Dodaj PDF powyżej.",
@@ -507,6 +529,7 @@ function applyLang() {
   document.querySelectorAll("[data-t-title]").forEach((e) => { e.title = t(e.dataset.tTitle); e.setAttribute("aria-label", e.title); });
   $("ed-note").placeholder = t("placeholder");
   $("theme").setAttribute("aria-label", t("theme"));
+  document.querySelectorAll(".thumbnail").forEach((el) => el.setAttribute("aria-label", `${t("page")} ${el.dataset.page}`));
 }
 
 // ---------- helpers ----------
@@ -689,14 +712,22 @@ async function openDoc() {
     pagesEl.appendChild(div);
     const p = { num: i, page, base, div, rendered: false, task: null, text: null };
     S.pages.push(p);
+    addThumbnail(p);
     div.querySelector(".page-note").addEventListener("click", () => openEditor({ kind: "page", page: i, top: 0, rects: [], quote: "" }));
     setupArea(p);
   }
   await loadOutline();
+  $("pagenum").max = S.pages.length;
+  $("pagenum").style.width = Math.max(4, String(S.pages.length).length + 1) + "ch";
+  $("pagenum").disabled = false;
+  $("pagetotal").textContent = S.pages.length;
   setScale(fitScale());
   S.notes = await api("GET", docUrl("/notes"));
   renderAll();
   viewer.dispatchEvent(new Event("scroll"));
+  let showThumbnails = false;
+  try { showThumbnails = localStorage.getItem("pdf-notes-thumbnails") === "open"; } catch {}
+  setThumbnails(showThumbnails);
   setInterval(checkChanged, 5000);
 }
 function showMeta() { $("meta").textContent = S.doc.modified ? t("pdfFrom", S.doc.modified.replace("T", " ")) : ""; }
@@ -775,7 +806,115 @@ function scrollToPage(num, frac = 0, smooth = true) {
   const p = S.pages[num - 1];
   viewer.scrollTo({ top: p.div.offsetTop + frac * p.div.offsetHeight - 80, behavior: smooth ? "smooth" : "auto" });
 }
-viewer.addEventListener("scroll", () => { const c = currentPage(); if (c) $("pageind").textContent = `${t("page")} ${c.num} / ${S.pages.length}`; });
+viewer.addEventListener("scroll", () => {
+  const c = currentPage();
+  if (c) {
+    if (document.activeElement !== $("pagenum")) $("pagenum").value = c.num;
+    syncThumbnail(c.num);
+  }
+});
+$("pageind").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = $("pagenum");
+  if (!input.checkValidity()) return;
+  scrollToPage(input.valueAsNumber, 0, false);
+  input.blur();
+});
+$("pagenum").addEventListener("focus", (e) => e.target.select());
+$("pagenum").addEventListener("blur", (e) => {
+  const current = currentPage();
+  if (current) e.target.value = current.num;
+});
+$("pagenum").addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { e.stopPropagation(); e.target.blur(); }
+});
+
+// ---------- page thumbnails ----------
+const thumbs = $("thumbs");
+const thumbObserver = new IntersectionObserver((entries) => {
+  for (const entry of entries) {
+    const p = S.pages[+entry.target.dataset.page - 1];
+    if (entry.isIntersecting && !$("thumbnails").hidden) renderThumbnail(p);
+    else clearThumbnail(p);
+  }
+}, { root: thumbs, rootMargin: "300px 0px" });
+
+function addThumbnail(p) {
+  const button = document.createElement("button");
+  button.type = "button"; button.className = "thumbnail"; button.dataset.page = p.num;
+  button.setAttribute("aria-label", `${t("page")} ${p.num}`);
+  const scale = Math.min(120 / p.base.width, 160 / p.base.height);
+  button.innerHTML = `<span class="thumb-paper" style="width:${p.base.width * scale}px;height:${p.base.height * scale}px"></span><span aria-hidden="true">${p.num}</span>`;
+  button.addEventListener("click", () => {
+    if (narrow.matches) setThumbnails(false);
+    scrollToPage(p.num, 0, false);
+    syncThumbnail(p.num);
+  });
+  p.thumbnail = button; p.thumbScale = scale;
+  thumbs.appendChild(button);
+  thumbObserver.observe(button);
+}
+async function renderThumbnail(p) {
+  if (p.thumbCanvas) return;
+  const canvas = document.createElement("canvas");
+  const vp = p.page.getViewport({ scale: p.thumbScale });
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.ceil(vp.width * dpr); canvas.height = Math.ceil(vp.height * dpr);
+  p.thumbCanvas = canvas;
+  p.thumbnail.querySelector(".thumb-paper").appendChild(canvas);
+  const task = p.page.render({ canvasContext: canvas.getContext("2d"), viewport: vp, transform: [dpr, 0, 0, dpr, 0, 0] });
+  p.thumbTask = task;
+  try { await task.promise; }
+  catch (e) {
+    if (e.name !== "RenderingCancelledException") console.error(e);
+    if (p.thumbCanvas === canvas) clearThumbnail(p);
+  }
+  finally { if (p.thumbTask === task) p.thumbTask = null; }
+}
+function clearThumbnail(p) {
+  p.thumbTask?.cancel(); p.thumbTask = null;
+  if (p.thumbCanvas) {
+    p.thumbCanvas.remove(); p.thumbCanvas.width = p.thumbCanvas.height = 0;
+    p.thumbCanvas = null;
+  }
+}
+function syncThumbnail(num) {
+  const active = thumbs.querySelector('[aria-current="page"]');
+  const button = S.pages[num - 1]?.thumbnail;
+  if (!button) return;
+  if (active !== button) {
+    active?.removeAttribute("aria-current");
+    button.setAttribute("aria-current", "page");
+    if (!$("thumbnails").hidden) revealThumbnail(button);
+  }
+}
+function revealThumbnail(button) {
+  const top = button.offsetTop - thumbs.offsetTop, bottom = top + button.offsetHeight;
+  if (top < thumbs.scrollTop) thumbs.scrollTop = top;
+  else if (bottom > thumbs.scrollTop + thumbs.clientHeight) thumbs.scrollTop = bottom - thumbs.clientHeight;
+}
+function setThumbnails(show) {
+  const wasFit = S.pages.length && Math.abs(S.scale - Math.max(0.4, fitScale())) < 0.01;
+  $("thumbnails").hidden = !show;
+  $("thumbbtn").classList.toggle("on", show);
+  $("thumbbtn").setAttribute("aria-expanded", String(show));
+  if (show && narrow.matches) setSide(false);
+  try { localStorage.setItem("pdf-notes-thumbnails", show ? "open" : "closed"); } catch {}
+  if (wasFit) setScale(fitScale());
+  if (show) {
+    const current = currentPage();
+    if (current) { syncThumbnail(current.num); revealThumbnail(S.pages[current.num - 1].thumbnail); }
+    for (const p of S.pages) { thumbObserver.unobserve(p.thumbnail); thumbObserver.observe(p.thumbnail); }
+  } else {
+    for (const p of S.pages) clearThumbnail(p);
+    if ($("thumbnails").contains(document.activeElement)) $("thumbbtn").focus({ preventScroll: true });
+  }
+}
+$("thumbbtn").addEventListener("click", () => setThumbnails($("thumbnails").hidden));
+$("thumbclose").addEventListener("click", () => setThumbnails(false));
+narrow.addEventListener("change", () => {
+  if (narrow.matches && !$("thumbnails").hidden) setSide(false);
+});
 
 // Use the PDF's destinations rather than guessing references from their text.
 function linkAt(pageDiv, clientX, clientY) {
@@ -975,6 +1114,7 @@ document.addEventListener("keydown", (e) => {
     setArea(!document.body.classList.contains("area-mode"));
   else if (!open && e.key === "Escape") {
     if (document.body.classList.contains("area-mode")) setArea(false);
+    else if (!$("thumbnails").hidden) setThumbnails(false);
     else if (narrow.matches && !document.body.classList.contains("side-hidden")) setSide(false);
   }
 });
@@ -1186,6 +1326,7 @@ async function exportPdf() {
 
 // ---------- toolbar ----------
 function setSide(show) {
+  if (show && narrow.matches && !$("thumbnails").hidden) setThumbnails(false);
   document.body.classList.toggle("side-hidden", !show);
   $("sidebtn").setAttribute("aria-pressed", String(show));
   if (show) addbtn.hidden = true;
@@ -1199,6 +1340,7 @@ $("sideclose").addEventListener("click", () => setSide(false));
 // ---------- start ----------
 applyLang();
 if (S.docId) {
+  $("thumbbtn").hidden = false;
   $("app").hidden = false; $("homelink").hidden = false; $("viewertools").hidden = false; $("titlebox").hidden = false; $("brand").hidden = true;
   setSide(!narrow.matches);
   openDoc().catch((e) => { console.error(e); toast(`${t("loadErr")}: ${e.message}`, true); });
