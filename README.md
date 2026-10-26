@@ -10,6 +10,8 @@ agent read the files directly.
 - Every note keeps the page, the section (from the PDF bookmarks), the
   quoted text with 80 characters of context on each side, and its status
   (`open`, `done`, `rejected`).
+- Notes are written in a small popover next to what they are about. Click
+  marked text or its pin to read and edit the note in place.
 - **Copy as Markdown** / **Download .md** exports all notes in reading order.
 - **Download PDF with notes** writes the notes into a copy of the PDF as
   standard annotations (highlights, rectangles, sticky notes), readable in

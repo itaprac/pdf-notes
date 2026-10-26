@@ -258,7 +258,8 @@
   /* dialogs */
   .overlay { position: fixed; inset: 0; background: var(--backdrop); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;
              animation: fade .14s ease-out; }
-  .dialog { width: min(580px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line);
+  /* color and font override pdf.js's own .dialog, which follows the system theme and font instead of ours */
+  .dialog { width: min(580px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--panel); color: var(--ink); font: inherit; border: 1px solid var(--line);
             border-radius: 14px; box-shadow: var(--shadow-lg); animation: pop .16s ease-out; }
   .dialog.small { width: min(400px, 100%); }
   .dlg-head { display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 0 18px; }
@@ -270,12 +271,33 @@
                    border-radius: 0 6px 6px 0; background: var(--quote-bg); color: var(--quote); font-style: italic; }
   .dialog textarea { display: block; width: 100%; min-height: 140px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius);
                      resize: vertical; background: var(--panel); color: var(--ink); line-height: 1.5; transition: border-color .12s, box-shadow .12s; }
-  .dialog textarea::placeholder { color: var(--faint); }
   .dialog textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
-  .status-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-  .status-row .lbl { font-size: 12px; color: var(--muted); }
   .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; padding: 14px 18px 16px; }
-  .dlg-foot .hint { flex: 1; font-size: 12px; color: var(--muted); }
+  /* the note editor is a compact popover beside the passage, page, or area it is about; long notes get a wider one */
+  #editor { background: transparent; }
+  #editor .dialog { width: min(380px, 100%); }
+  #editor .dialog.wide { width: min(520px, 100%); }
+  #editor .dlg-head { align-items: center; padding: 10px 10px 0 14px; }
+  #editor .dlg-head > div { display: flex; align-items: center; gap: 8px; }
+  #editor h2 { flex: none; font-size: 14px; }
+  #editor .ctx { min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #editor .dlg-body { padding: 8px 12px 0; }
+  #editor .quote { max-height: 66px; margin-bottom: 8px; padding: 5px 10px; font-size: 13px; }
+  #editor textarea { min-height: 0; max-height: 50vh; padding: 9px 11px; font-size: 15px; line-height: 1.55; resize: none; }
+  #editor .dlg-foot { gap: 6px; padding: 10px 12px 12px; }
+  #ed-save small { font-size: 11px; font-weight: 400; opacity: .75; }
+  /* the status is a small colored pill; the native menu picks another one */
+  #ed-status { flex: none; height: 22px; padding: 0 20px 0 19px; border: 1px solid transparent; border-radius: 11px; font-size: 12px; font-weight: 500;
+               appearance: none; -webkit-appearance: none; cursor: pointer; color: var(--pill-ink); border-color: color-mix(in srgb, var(--pill-ink) 25%, transparent);
+               background: radial-gradient(circle at 10px 50%, var(--pill-dot) 3.5px, transparent 4px),
+                           url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a8f99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 7px center / 8px 5px,
+                           var(--pill-bg); }
+  #ed-status option { color: var(--ink); background: var(--panel); }
+  #ed-status[data-v="open"] { --pill-bg: var(--old-bg); --pill-ink: var(--old-ink); --pill-dot: var(--mark); }
+  #ed-status[data-v="done"] { --pill-bg: var(--done-bg); --pill-ink: var(--done-ink); --pill-dot: var(--mark-done); }
+  #ed-status[data-v="rejected"] { --pill-bg: var(--rej-bg); --pill-ink: var(--rej-ink); --pill-dot: var(--mark-rej); }
+  .hl.pending { background: var(--ring); }
+  .hl.area.pending { background: transparent; border-color: var(--accent); }
   #confirm .dlg-body { padding: 18px 20px 0; }
   #confirm p { margin: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
   #confirm .sub { margin-top: 6px; color: var(--muted); font-size: 13px; }
@@ -298,6 +320,9 @@
   @media (max-width: 900px) { #pageind label { display: none; } }
   @media (max-width: 760px) {
     #thumbnails { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: var(--shadow-lg); }
+    /* the note editor becomes a sheet at the bottom of the screen */
+    #editor { align-items: flex-end; padding: 0; }
+    #editor .dialog, #editor .dialog.wide { width: 100%; border-radius: 14px 14px 0 0; }
     /* the notes panel becomes a drawer over the PDF */
     #side { position: absolute; top: 0; right: 0; bottom: 0; z-index: 40; width: min(420px, 100%); box-shadow: var(--shadow-lg); animation: slide .18s ease-out; }
     #sideclose { display: inline-flex; }
@@ -427,25 +452,24 @@
 <button class="btn primary" id="addbtn" hidden><svg class="i"><use href="#i-note"/></svg><span data-t="addNote"></span></button>
 <div id="editor" class="overlay" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ed-title">
   <div class="dlg-head">
-    <div><h2 id="ed-title"></h2><div class="ctx" id="ed-ctx"></div></div>
+    <div>
+      <h2 id="ed-title"></h2>
+      <select id="ed-status" data-t-title="status">
+        <option value="open" data-t="st_open"></option>
+        <option value="done" data-t="st_done"></option>
+        <option value="rejected" data-t="st_rejected"></option>
+      </select>
+      <div class="ctx" id="ed-ctx"></div>
+    </div>
     <button class="btn icon ghost sm" id="ed-close" data-t-title="cancel"><svg class="i"><use href="#i-x"/></svg></button>
   </div>
   <div class="dlg-body">
     <div class="quote" id="ed-quote"></div>
-    <textarea id="ed-note"></textarea>
-    <div class="status-row" id="ed-status-row">
-      <span class="lbl" data-t="status"></span>
-      <div class="seg" id="ed-status" role="group">
-        <button data-v="open" data-t="st_open"></button>
-        <button data-v="done" data-t="st_done"></button>
-        <button data-v="rejected" data-t="st_rejected"></button>
-      </div>
-    </div>
+    <textarea id="ed-note" rows="3" aria-labelledby="ed-title"></textarea>
   </div>
   <div class="dlg-foot">
-    <span class="hint" data-t-html="editorHint"></span>
     <button class="btn" id="ed-cancel" data-t="cancel"></button>
-    <button class="btn primary" id="ed-save" data-t="save"></button>
+    <button class="btn primary" id="ed-save"><span data-t="save"></span><small id="ed-keys" aria-hidden="true"></small></button>
   </div>
 </div></div>
 <div id="confirm" class="overlay" hidden><div class="dialog small" role="alertdialog" aria-modal="true" aria-labelledby="cf-msg">
@@ -479,9 +503,9 @@ const STR = {
     help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
     empty: "<b>No notes yet</b><br>Select a passage in the PDF and click <b>Add note</b>, or mark a figure with <b>Area</b> (<kbd>R</kbd>).",
     emptyOpen: "<b>No open notes</b><br>Everything is done. Switch to <b>All</b> to see done and rejected notes.",
-    addNote: "Add note", addPageNote: "Note on page", editorHint: "<kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves",
-    newNote: "New note", editNote: (n) => `Edit note #${n}`, status: "Status",
-    placeholder: "What is wrong here and what should change?", cancel: "Cancel", save: "Save", edit: "Edit", del: "Delete",
+    addNote: "Add note", addPageNote: "Note on page",
+    newNote: "New note", editNote: (n) => `Note #${n}`, status: "Status",
+    cancel: "Cancel", save: "Save", edit: "Edit", del: "Delete",
     delAsk: "Delete this note?", delSub: "This cannot be undone.", saved: "Saved", deleted: "Deleted", removed: "Removed", notSaved: "Not saved", keptText: "Your text is still in the editor.",
     kinds: { text: "text passage", area: "page area", page: "whole page", general: "general note" },
     generalShort: "General", noText: "No text",
@@ -508,9 +532,9 @@ const STR = {
     help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
     empty: "<b>Brak uwag</b><br>Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b> albo zaznacz rysunek <b>Obszarem</b> (<kbd>R</kbd>).",
     emptyOpen: "<b>Brak otwartych uwag</b><br>Wszystko zrobione. Przełącz na <b>Wszystkie</b>, aby zobaczyć zrobione i odrzucone.",
-    addNote: "Dodaj uwagę", addPageNote: "Uwaga do strony", editorHint: "<kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje",
-    newNote: "Nowa uwaga", editNote: (n) => `Edycja uwagi #${n}`, status: "Status",
-    placeholder: "Co ci się nie podoba i co chcesz zmienić?", cancel: "Anuluj", save: "Zapisz", edit: "Edytuj", del: "Usuń",
+    addNote: "Dodaj uwagę", addPageNote: "Uwaga do strony",
+    newNote: "Nowa uwaga", editNote: (n) => `Uwaga #${n}`, status: "Status",
+    cancel: "Anuluj", save: "Zapisz", edit: "Edytuj", del: "Usuń",
     delAsk: "Usunąć tę uwagę?", delSub: "Tego nie da się cofnąć.", saved: "Zapisano", deleted: "Usunięto", removed: "Usunięto", notSaved: "Nie zapisano", keptText: "Treść została w okienku.",
     kinds: { text: "fragment tekstu", area: "obszar strony", page: "cała strona", general: "uwaga ogólna" },
     generalShort: "Ogólna", noText: "Bez notatki",
@@ -527,7 +551,6 @@ function applyLang() {
   document.querySelectorAll("[data-t]").forEach((e) => (e.textContent = t(e.dataset.t)));
   document.querySelectorAll("[data-t-html]").forEach((e) => (e.innerHTML = t(e.dataset.tHtml)));
   document.querySelectorAll("[data-t-title]").forEach((e) => { e.title = t(e.dataset.tTitle); e.setAttribute("aria-label", e.title); });
-  $("ed-note").placeholder = t("placeholder");
   $("theme").setAttribute("aria-label", t("theme"));
   document.querySelectorAll(".thumbnail").forEach((el) => el.setAttribute("aria-label", `${t("page")} ${el.dataset.page}`));
 }
@@ -713,7 +736,7 @@ async function openDoc() {
     const p = { num: i, page, base, div, rendered: false, task: null, text: null };
     S.pages.push(p);
     addThumbnail(p);
-    div.querySelector(".page-note").addEventListener("click", () => openEditor({ kind: "page", page: i, top: 0, rects: [], quote: "" }));
+    div.querySelector(".page-note").addEventListener("click", (e) => openEditor({ kind: "page", page: i, top: 0, rects: [], quote: "", anchor: e.currentTarget.getBoundingClientRect() }));
     setupArea(p);
   }
   await loadOutline();
@@ -1044,8 +1067,9 @@ function setupArea(p) {
     start = null;
     if (cancelled || !inArea() || r.w < 0.01 || r.h < 0.01) return;
     setArea(false);
-    const rr = mergeRects([r]);
-    openEditor({ kind: "area", page: p.num, top: rr[0].y, rects: rr, quote: "" });
+    const rr = mergeRects([r]), b = p.div.getBoundingClientRect();
+    const anchor = new DOMRect(b.left + r.x * b.width, b.top + r.y * b.height, r.w * b.width, r.h * b.height);
+    openEditor({ kind: "area", page: p.num, top: rr[0].y, rects: rr, quote: "", anchor });
   };
   layer.addEventListener("pointerup", (e) => end(e, false));
   layer.addEventListener("pointercancel", (e) => end(e, true));
@@ -1054,7 +1078,7 @@ function setupArea(p) {
 // ---------- editor ----------
 function setEdStatus(v) {
   S.edStatus = v;
-  document.querySelectorAll("#ed-status button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+  $("ed-status").value = $("ed-status").dataset.v = v;
 }
 function openEditor(item, existing = null) {
   S.pending = item; S.editing = existing;
@@ -1062,17 +1086,43 @@ function openEditor(item, existing = null) {
   if (item.page && !existing) item.section = sectionAt(item.page, item.top || 0);
   $("ed-title").textContent = existing ? t("editNote", noteNumber(existing.id)) : t("newNote");
   $("ed-ctx").textContent = [item.page ? `${t("page")} ${item.page}` : null, item.section || null, t("kinds")[item.kind]].filter(Boolean).join(" · ");
-  $("ed-quote").hidden = !item.quote;
+  // Next to its marked passage the editor needs no quote; it shows one only when centered.
+  $("ed-quote").hidden = !item.quote || !!item.anchor;
   $("ed-quote").textContent = item.quote || "";
   $("ed-note").value = S.edInitial = existing ? existing.note : "";
-  $("ed-status-row").hidden = !existing;
+  $("ed-status").hidden = !existing;
   setEdStatus(existing ? existing.status : "open");
   S.edReturn = document.activeElement;
   $("editor").hidden = false; setInert(true);
-  setTimeout(() => { const ta = $("ed-note"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+  drawPending(); fitNote(); placeEditor(item.anchor);
+  setTimeout(() => { const ta = $("ed-note"); ta.focus({ preventScroll: true }); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+}
+// Below the anchor, or above it when there is no room; centered (or a bottom sheet) without one.
+function placeEditor(anchor) {
+  const dlg = $("editor").firstElementChild, gap = 8;
+  Object.assign(dlg.style, { position: "", left: "", top: "", bottom: "" });
+  if (!anchor || narrow.matches) return;
+  const w = dlg.offsetWidth, h = dlg.offsetHeight;
+  const left = Math.max(gap, Math.min(innerWidth - w - gap, anchor.left)) + "px";
+  if (anchor.bottom + gap + h <= innerHeight - gap) Object.assign(dlg.style, { position: "fixed", left, top: anchor.bottom + gap + "px" });
+  else if (anchor.top - gap - h >= gap) Object.assign(dlg.style, { position: "fixed", left, bottom: innerHeight - anchor.top + gap + "px" });
+  else Object.assign(dlg.style, { position: "fixed", left, bottom: gap + "px" });
+}
+// The text box starts at three lines and grows with the note; a long note also widens the editor.
+function fitNote() {
+  const ta = $("ed-note");
+  $("editor").firstElementChild.classList.toggle("wide", ta.value.length > 200);
+  ta.style.height = "auto"; ta.style.height = ta.scrollHeight + ta.offsetHeight - ta.clientHeight + "px";
+}
+$("ed-note").addEventListener("input", () => { fitNote(); placeEditor(S.pending?.anchor); });
+// Focusing the text box clears the browser selection, so a new note marks its passage itself.
+function drawPending() {
+  if (!S.pending || S.editing) return;
+  for (const r of S.pending.rects || []) addHl(r, `pending ${S.pending.kind === "area" ? "area" : ""}`);
 }
 function closeEditor() {
   $("editor").hidden = true; setInert(false); S.pending = S.editing = null;
+  document.querySelectorAll(".hl.pending").forEach((e) => e.remove());
   if (S.edReturn?.isConnected) S.edReturn.focus({ preventScroll: true });
   S.edReturn = null;
 }
@@ -1099,7 +1149,8 @@ async function saveEditor() {
 $("ed-save").addEventListener("click", saveEditor);
 $("ed-cancel").addEventListener("click", closeEditor);
 $("ed-close").addEventListener("click", closeEditor);
-$("ed-status").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setEdStatus(b.dataset.v); });
+$("ed-status").addEventListener("change", (e) => setEdStatus(e.target.value));
+$("ed-keys").textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘↵" : "Ctrl+↵";
 // A click outside the dialog closes it only when nothing would be lost.
 $("editor").addEventListener("mousedown", (e) => {
   if (e.target.id !== "editor") return;
@@ -1118,11 +1169,19 @@ document.addEventListener("keydown", (e) => {
     else if (narrow.matches && !document.body.classList.contains("side-hidden")) setSide(false);
   }
 });
-$("general").addEventListener("click", () => openEditor({ kind: "general", page: null, top: 0, rects: [], quote: "" }));
+$("general").addEventListener("click", (e) => openEditor({ kind: "general", page: null, top: 0, rects: [], quote: "", anchor: e.currentTarget.getBoundingClientRect() }));
 
 // ---------- list and highlights ----------
 const order = (a, b) => (a.page ?? 1e9) - (b.page ?? 1e9) || (a.top || 0) - (b.top || 0) || a.created.localeCompare(b.created);
 const noteNumber = (id) => [...S.notes].sort(order).findIndex((n) => n.id === id) + 1;
+function addHl(r, cls) {
+  const p = S.pages[r.p - 1]; if (!p) return null;
+  const d = document.createElement("div");
+  d.className = `hl ${cls}`;
+  Object.assign(d.style, { left: r.x * 100 + "%", top: r.y * 100 + "%", width: r.w * 100 + "%", height: r.h * 100 + "%" });
+  p.div.querySelector(".hl-layer").appendChild(d);
+  return d;
+}
 function renderAll() {
   if (!S.doc) return;
   const all = [...S.notes].sort(order);
@@ -1133,15 +1192,13 @@ function renderAll() {
   for (const n of shown) {
     const pinned = new Set();
     for (const r of n.rects || []) {
-      const p = S.pages[r.p - 1]; if (!p) continue;
-      const d = document.createElement("div");
-      d.className = `hl ${n.kind === "area" ? "area" : ""} ${n.status}`; d.dataset.id = n.id;
-      Object.assign(d.style, { left: r.x * 100 + "%", top: r.y * 100 + "%", width: r.w * 100 + "%", height: r.h * 100 + "%" });
-      p.div.querySelector(".hl-layer").appendChild(d);
-      if (!pinned.has(r.p)) { pinned.add(r.p); addPin(p, n, num.get(n.id), r.y); }
+      const d = addHl(r, `${n.kind === "area" ? "area" : ""} ${n.status}`); if (!d) continue;
+      d.dataset.id = n.id;
+      if (!pinned.has(r.p)) { pinned.add(r.p); addPin(S.pages[r.p - 1], n, num.get(n.id), r.y); }
     }
     if (n.kind === "page" && S.pages[n.page - 1]) addPin(S.pages[n.page - 1], n, num.get(n.id), 0.01);
   }
+  drawPending();
   const openCount = S.notes.filter((n) => n.status === "open").length;
   $("n-open").textContent = openCount; $("n-all").textContent = S.notes.length;
   $("sidecount").textContent = openCount; $("sidecount").hidden = !openCount;
@@ -1175,10 +1232,21 @@ function addPin(p, n, no, y) {
   p.pinYs.push(y);
   const pin = document.createElement("div");
   pin.className = `pin ${n.status}`; pin.textContent = no; pin.style.top = y * 100 + "%"; pin.title = n.note || "";
-  pin.addEventListener("click", () => { setSide(true); selectCard(n.id, true); flash(n.id); });
+  pin.addEventListener("click", () => openNote(n.id, pin.getBoundingClientRect()));
   p.div.querySelector(".pin-layer").appendChild(pin);
 }
-// Clicking marked text (or inside a marked area) opens its note in the list.
+// A note opens for editing next to its visible marks (or next to `fallback`), and is selected in the list.
+function openNote(id, fallback) {
+  const n = S.notes.find((x) => x.id === id); if (!n) return;
+  selectCard(id, true); flash(id);
+  const v = viewer.getBoundingClientRect();
+  const rs = [...document.querySelectorAll(`.hl[data-id="${id}"]`)].map((h) => h.getBoundingClientRect())
+    .filter((r) => r.bottom > v.top && r.top < v.bottom && r.right > v.left && r.left < v.right);
+  const left = Math.min(...rs.map((r) => r.left)), top = Math.min(...rs.map((r) => r.top));
+  const anchor = rs.length ? new DOMRect(left, top, Math.max(...rs.map((r) => r.right)) - left, Math.max(...rs.map((r) => r.bottom)) - top) : fallback;
+  openEditor({ ...n, anchor }, n);
+}
+// Clicking marked text (or inside a marked area) opens its note.
 function noteAt(pageDiv, clientX, clientY) {
   const b = pageDiv.getBoundingClientRect(), num = +pageDiv.dataset.page;
   const x = (clientX - b.left) / b.width, y = (clientY - b.top) / b.height;
@@ -1204,9 +1272,7 @@ viewer.addEventListener("click", (e) => {
     if (link) followLink(link).catch(console.error);
     return;
   }
-  setSide(true);
-  selectCard(id, true);
-  flash(id);
+  openNote(id, null);
 });
 let hoverRaf = 0;
 viewer.addEventListener("mousemove", (e) => {
