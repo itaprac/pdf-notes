@@ -17,6 +17,8 @@ agent read the files directly.
 - Upload PDFs by drag and drop, or open a PDF on disk. A PDF on disk is
   served live: when it is rebuilt (e.g. by LaTeX), the page offers a reload.
 - Click PDF references to jump to their destination, or open web links.
+- Toggle the page thumbnails panel to jump between pages. It follows the current
+  page and remembers whether you left it open or closed.
 - Sun/moon theme toggle with a saved preference; follows the system until chosen.
   Dark mode also darkens PDF pages in the preview. Exports keep the original colors.
 - English and Polish interface.
