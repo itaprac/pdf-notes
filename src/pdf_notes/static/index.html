@@ -502,7 +502,7 @@ const STR = {
     removeAsk: (n) => `Remove “${n}” from the library?`, removeAskUpload: (n) => `Remove “${n}” and all its notes?`,
     removeSub: "The PDF on disk stays where it is.", removeSubUpload: "The uploaded copy and its notes are deleted.",
     uploaded: "uploaded", onDisk: "file on disk", missing: "file missing", uploading: "Uploading…", notPdf: "Not a PDF file",
-    zoomIn: "Zoom in", zoomOut: "Zoom out", fitWidth: "Fit width", area: "Area", areaTitle: "Mark a rectangular area, e.g. a figure (key R)",
+    zoomIn: "Zoom in (⌘/Ctrl +)", zoomOut: "Zoom out (⌘/Ctrl −)", fitWidth: "Fit width (⌘/Ctrl 0)", area: "Area", areaTitle: "Mark a rectangular area, e.g. a figure (key R)",
     areaHint: "Drag over the page to mark an area · <kbd>Esc</kbd> cancels",
     toggleList: "Show/hide notes", close: "Close", page: "page", pageShort: "p.", filterOpen: "Open", filterAll: "All",
     notesTitle: "Notes", general: "General", generalTitle: "A note about the whole document",
@@ -512,7 +512,7 @@ const STR = {
     agentMissing: "This export needs a newer server; restart pdf-notes", reply: "Reply",
     downloadPdf: "Download PDF with notes", downloadPdfTitle: "The PDF with highlights and notes as annotations (Preview, Acrobat, …). Exports the notes shown in the list.",
     building: "Building PDF…", pdfFailed: "Could not build the PDF", tips: "How it works",
-    help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
+    help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd> zooms, <kbd>0</kbd> fits the width. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
     empty: "<b>No notes yet</b><br>Select a passage in the PDF and click <b>Add note</b>, or mark a figure with <b>Area</b> (<kbd>R</kbd>).",
     emptyOpen: "<b>No open notes</b><br>Everything is done. Switch to <b>All</b> to see done and rejected notes.",
     addNote: "Add note", addPageNote: "Note on page",
@@ -534,7 +534,7 @@ const STR = {
     removeAsk: (n) => `Usunąć „${n}” z biblioteki?`, removeAskUpload: (n) => `Usunąć „${n}” razem z uwagami?`,
     removeSub: "Plik PDF na dysku zostaje na miejscu.", removeSubUpload: "Wgrana kopia i jej uwagi zostaną usunięte.",
     uploaded: "wgrany", onDisk: "plik na dysku", missing: "brak pliku", uploading: "Wgrywanie…", notPdf: "To nie jest plik PDF",
-    zoomIn: "Powiększ", zoomOut: "Pomniejsz", fitWidth: "Dopasuj do szerokości", area: "Obszar", areaTitle: "Zaznacz prostokątem obszar strony, np. rysunek (klawisz R)",
+    zoomIn: "Powiększ (⌘/Ctrl +)", zoomOut: "Pomniejsz (⌘/Ctrl −)", fitWidth: "Dopasuj do szerokości (⌘/Ctrl 0)", area: "Obszar", areaTitle: "Zaznacz prostokątem obszar strony, np. rysunek (klawisz R)",
     areaHint: "Przeciągnij po stronie, aby zaznaczyć obszar · <kbd>Esc</kbd> anuluje",
     toggleList: "Pokaż/ukryj listę", close: "Zamknij", page: "strona", pageShort: "s.", filterOpen: "Otwarte", filterAll: "Wszystkie",
     notesTitle: "Uwagi", general: "Ogólna", generalTitle: "Uwaga do całego dokumentu",
@@ -544,7 +544,7 @@ const STR = {
     agentMissing: "Ten eksport wymaga nowszego serwera; uruchom pdf-notes ponownie", reply: "Odpowiedź",
     downloadPdf: "Pobierz PDF z uwagami", downloadPdfTitle: "PDF z zakreśleniami i notatkami jako adnotacjami (Podgląd, Acrobat, …). Eksportuje uwagi widoczne na liście.",
     building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a", tips: "Jak to działa",
-    help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
+    help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd> powiększa i pomniejsza, <kbd>0</kbd> dopasowuje do szerokości. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
     empty: "<b>Brak uwag</b><br>Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b> albo zaznacz rysunek <b>Obszarem</b> (<kbd>R</kbd>).",
     emptyOpen: "<b>Brak otwartych uwag</b><br>Wszystko zrobione. Przełącz na <b>Wszystkie</b>, aby zobaczyć zrobione i odrzucone.",
     addNote: "Dodaj uwagę", addPageNote: "Uwaga do strony",
@@ -1217,6 +1217,8 @@ $("editor").addEventListener("mousedown", (e) => {
   if (e.target.id !== "editor") return;
   if ($("ed-note").value === S.edInitial) closeEditor(); else { e.preventDefault(); $("ed-note").focus(); }
 });
+// By key position, so that it works on any keyboard layout (shift or not).
+const ZOOM_KEYS = { Equal: "in", NumpadAdd: "in", Minus: "out", NumpadSubtract: "out", Digit0: "fit", Numpad0: "fit" };
 document.addEventListener("keydown", (e) => {
   if (!S.doc) return;
   const open = !$("editor").hidden;
@@ -1224,6 +1226,12 @@ document.addEventListener("keydown", (e) => {
   else if (open && e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEditor(); }
   else if (!open && !e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "r" || e.key === "R") && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))
     setArea(!document.body.classList.contains("area-mode"));
+  // ⌘/Ctrl + plus, minus and 0 zoom the PDF instead of the whole page.
+  else if (!open && (e.metaKey || e.ctrlKey) && !e.altKey && ZOOM_KEYS[e.code]) {
+    e.preventDefault();
+    const z = ZOOM_KEYS[e.code];
+    setScale(z === "fit" ? fitScale() : z === "in" ? S.scale * 1.15 : S.scale / 1.15);
+  }
   else if (!open && e.key === "Escape") {
     if (document.body.classList.contains("area-mode")) setArea(false);
     else if (!$("thumbnails").hidden) setThumbnails(false);
