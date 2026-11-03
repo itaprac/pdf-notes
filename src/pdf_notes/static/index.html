@@ -489,7 +489,7 @@ const STR = {
     theme: "Dark theme",
     library: "Back to the library", libraryShort: "Library", dropTitle: "Drop PDF files here", dropSub: "or pick them from your computer", choose: "Choose PDF…",
     docsTitle: "Documents", noDocs: "No documents yet. Add a PDF above to start.",
-    notesN: (o, n) => `${o} open · ${n} total`, openN: (o) => `${o} open`, ofN: (n) => `of ${n}`, open: "Open", remove: "Remove",
+    notesN: (o, n) => `${o} open · ${n} total`, ofN: (n) => `of ${n}`, open: "Open", remove: "Remove",
     removeAsk: (n) => `Remove “${n}” from the library?`, removeAskUpload: (n) => `Remove “${n}” and all its notes?`,
     removeSub: "The PDF on disk stays where it is.", removeSubUpload: "The uploaded copy and its notes are deleted.",
     uploaded: "uploaded", onDisk: "file on disk", missing: "file missing", uploading: "Uploading…", notPdf: "Not a PDF file",
@@ -518,7 +518,7 @@ const STR = {
     theme: "Ciemny motyw",
     library: "Wróć do biblioteki", libraryShort: "Biblioteka", dropTitle: "Upuść tutaj pliki PDF", dropSub: "albo wybierz je z dysku", choose: "Wybierz PDF…",
     docsTitle: "Dokumenty", noDocs: "Nie ma jeszcze dokumentów. Dodaj PDF powyżej.",
-    notesN: (o, n) => `${o} otwartych · ${n} wszystkich`, openN: (o) => `${o} otwartych`, ofN: (n) => `z ${n}`, open: "Otwórz", remove: "Usuń",
+    notesN: (o, n) => `${o} ${plural(o, "otwarta", "otwarte", "otwartych")} z ${n}`, ofN: (n) => `z ${n}`, open: "Otwórz", remove: "Usuń",
     removeAsk: (n) => `Usunąć „${n}” z biblioteki?`, removeAskUpload: (n) => `Usunąć „${n}” razem z uwagami?`,
     removeSub: "Plik PDF na dysku zostaje na miejscu.", removeSubUpload: "Wgrana kopia i jej uwagi zostaną usunięte.",
     uploaded: "wgrany", onDisk: "plik na dysku", missing: "brak pliku", uploading: "Wgrywanie…", notPdf: "To nie jest plik PDF",
@@ -543,6 +543,11 @@ const STR = {
     pdfFrom: (d) => `PDF z ${d}`, loadErr: "Nie udało się wczytać", lang: "pl",
   },
 };
+// Polish plural forms: 1 uwaga, 2–4 uwagi (but 12–14 uwag), 5 uwag.
+function plural(n, one, few, many) {
+  if (n === 1) return one;
+  return n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
+}
 let LANG = localStorage.getItem("pdf-notes-lang") || ((navigator.language || "en").startsWith("pl") ? "pl" : "en");
 const t = (k, ...a) => { const v = STR[LANG][k] ?? STR.en[k]; return typeof v === "function" ? v(...a) : v; };
 function applyLang() {
