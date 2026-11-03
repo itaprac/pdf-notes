@@ -28,7 +28,8 @@ agent read the files directly.
   Preview, Acrobat and other viewers. It exports the notes shown in the list.
 - Upload PDFs by drag and drop, or open a PDF on disk. A PDF on disk is
   served live: when it is rebuilt (e.g. by LaTeX), the page offers a reload.
-- Zoom with the toolbar or <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd>;
+- Zoom with the toolbar, <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd>,
+  <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + scroll or a trackpad pinch (around the pointer);
   <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>0</kbd> fits the page width.
 - Click PDF references to jump to their destination, or open web links.
 - Toggle the page thumbnails panel to jump between pages. It follows the current

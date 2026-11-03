@@ -162,7 +162,8 @@
   :root[data-theme="dark"] .thumb-paper canvas { filter: invert(.9) hue-rotate(180deg); }
   #stage { flex: 1; position: relative; min-width: 0; }
   #viewer { position: absolute; inset: 0; overflow: auto; padding: 24px 0 40vh; }
-  #pages { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+  /* as wide as the widest page, so a zoomed page can be scrolled to its left edge */
+  #pages { display: flex; flex-direction: column; align-items: center; gap: 30px; width: max-content; min-width: 100%; }
   .page { position: relative; background: #fff; color-scheme: light; box-shadow: 0 1px 3px rgba(16, 24, 40, .12), 0 4px 14px rgba(16, 24, 40, .08); }
   .page canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   :root[data-theme="dark"] .page { background: #1a1a1a; box-shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 4px 14px rgba(0, 0, 0, .35); }
@@ -512,7 +513,7 @@ const STR = {
     agentMissing: "This export needs a newer server; restart pdf-notes", reply: "Reply",
     downloadPdf: "Download PDF with notes", downloadPdfTitle: "The PDF with highlights and notes as annotations (Preview, Acrobat, …). Exports the notes shown in the list.",
     building: "Building PDF…", pdfFailed: "Could not build the PDF", tips: "How it works",
-    help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd> zooms, <kbd>0</kbd> fits the width. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
+    help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd> or scrolling zooms, <kbd>0</kbd> fits the width. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
     empty: "<b>No notes yet</b><br>Select a passage in the PDF and click <b>Add note</b>, or mark a figure with <b>Area</b> (<kbd>R</kbd>).",
     emptyOpen: "<b>No open notes</b><br>Everything is done. Switch to <b>All</b> to see done and rejected notes.",
     addNote: "Add note", addPageNote: "Note on page",
@@ -544,7 +545,7 @@ const STR = {
     agentMissing: "Ten eksport wymaga nowszego serwera; uruchom pdf-notes ponownie", reply: "Odpowiedź",
     downloadPdf: "Pobierz PDF z uwagami", downloadPdfTitle: "PDF z zakreśleniami i notatkami jako adnotacjami (Podgląd, Acrobat, …). Eksportuje uwagi widoczne na liście.",
     building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a", tips: "Jak to działa",
-    help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd> powiększa i pomniejsza, <kbd>0</kbd> dopasowuje do szerokości. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
+    help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd>/<kbd>−</kbd> albo przewijanie powiększa i pomniejsza, <kbd>0</kbd> dopasowuje do szerokości. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
     empty: "<b>Brak uwag</b><br>Zaznacz fragment tekstu w PDF-ie i kliknij <b>Dodaj uwagę</b> albo zaznacz rysunek <b>Obszarem</b> (<kbd>R</kbd>).",
     emptyOpen: "<b>Brak otwartych uwag</b><br>Wszystko zrobione. Przełącz na <b>Wszystkie</b>, aby zobaczyć zrobione i odrzucone.",
     addNote: "Dodaj uwagę", addPageNote: "Uwaga do strony",
@@ -787,8 +788,10 @@ const io = new IntersectionObserver((entries) => {
   }
 }, { root: viewer, rootMargin: "1200px 0px" });
 
-function setScale(scale) {
+// `at` (client coordinates) keeps that point of the page under the pointer; otherwise the current page stays in view.
+function setScale(scale, at = null) {
   const anchor = currentPage();
+  const point = at && pointAt(at);
   S.scale = Math.max(0.4, Math.min(4, scale));
   $("zoomval").textContent = Math.round(S.scale * 100) + "%";
   for (const p of S.pages) {
@@ -798,9 +801,40 @@ function setScale(scale) {
     p.div.style.height = Math.floor(p.base.height * S.scale) + "px";
     io.unobserve(p.div); io.observe(p.div);
   }
-  if (anchor) scrollToPage(anchor.num, anchor.frac, false);
+  if (point) {
+    const d = point.p.div;
+    viewer.scrollTop = d.offsetTop + point.fy * d.offsetHeight - point.vy;
+    viewer.scrollLeft = d.offsetLeft + point.fx * d.offsetWidth - point.vx;
+  } else if (anchor) scrollToPage(anchor.num, anchor.frac, false);
   renderAll();
 }
+// The page under a point of the viewer, and where on it the point is (as fractions).
+function pointAt({ x, y }) {
+  const v = viewer.getBoundingClientRect();
+  const vx = x - v.left, vy = y - v.top, cy = viewer.scrollTop + vy;
+  const p = S.pages.find((p) => cy < p.div.offsetTop + p.div.offsetHeight + 15) || S.pages[S.pages.length - 1];
+  if (!p) return null;
+  return { p, vx, vy, fx: (viewer.scrollLeft + vx - p.div.offsetLeft) / p.div.offsetWidth, fy: (cy - p.div.offsetTop) / p.div.offsetHeight };
+}
+// ⌘/Ctrl + scroll and trackpad pinch (which browsers send as Ctrl + wheel) zoom the PDF around the pointer.
+// Several events per frame are applied as one zoom step.
+let wheelZoom = null;
+viewer.addEventListener("wheel", (e) => {
+  if (!S.pages.length || !(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault();
+  const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 800 : 1);
+  if (!wheelZoom) {
+    wheelZoom = { factor: 1 };
+    requestAnimationFrame(() => { const z = wheelZoom; wheelZoom = null; setScale(S.scale * z.factor, z.at); });
+  }
+  wheelZoom.factor *= Math.exp(-Math.max(-100, Math.min(100, dy)) * 0.0015);
+  wheelZoom.at = { x: e.clientX, y: e.clientY };
+}, { passive: false });
+// Safari sends a trackpad pinch as gesture events instead.
+let gestureStart = 0;
+viewer.addEventListener("gesturestart", (e) => { e.preventDefault(); gestureStart = S.scale; });
+viewer.addEventListener("gesturechange", (e) => { e.preventDefault(); if (gestureStart) setScale(gestureStart * e.scale, { x: e.clientX, y: e.clientY }); });
+viewer.addEventListener("gestureend", (e) => { e.preventDefault(); gestureStart = 0; });
 
 async function renderPage(p) {
   if (p.rendered) return;
