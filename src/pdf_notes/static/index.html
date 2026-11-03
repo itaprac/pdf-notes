@@ -973,27 +973,65 @@ function pageOf(node) { const el = node?.nodeType === 1 ? node : node?.parentEle
 function captureSelection() {
   const sel = getSelection();
   if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  // Across a page break, leave out the running headers, footers and page numbers in between.
+  const spanned = S.pages.filter((p) => range.intersectsNode(p.div));
+  const margins = spanned.length > 1 ? spanned.flatMap(marginLines) : [];
+  margins.forEach((l) => l.spans.forEach((e) => e.classList.add("margin-text")));
   // Text of the PDF only: skip UI labels; join words hyphenated at line ends.
-  const frag = sel.getRangeAt(0).cloneContents();
-  frag.querySelectorAll(".page-num, .page-note, .pin, .pin-layer, .hl-layer, .area-layer").forEach((e) => e.remove());
+  const frag = range.cloneContents();
+  margins.forEach((l) => l.spans.forEach((e) => e.classList.remove("margin-text")));
+  frag.querySelectorAll(".page-num, .page-note, .pin, .pin-layer, .hl-layer, .area-layer, .margin-text").forEach((e) => e.remove());
   frag.querySelectorAll("br").forEach((e) => e.replaceWith(" "));
   const quote = dehyphen(norm(frag.textContent || ""));
   if (!quote) return null;
-  const range = sel.getRangeAt(0);
   const startPage = pageOf(range.startContainer);
   if (!startPage) return null;
+  // Boxes of the selected text only; the page's other layers would add whole-page boxes.
+  const skip = new Set(margins.flatMap((l) => l.spans));
   const rects = [];
-  for (const r of range.getClientRects()) {
-    if (r.width < 1 || r.height < 1) continue;
-    const pg = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => e.classList?.contains("page")) || startPage;
-    const b = pg.getBoundingClientRect();
-    rects.push({ p: +pg.dataset.page, x: (r.left - b.left) / b.width, y: (r.top - b.top) / b.height, w: r.width / b.width, h: r.height / b.height });
+  for (const p of spanned) {
+    const b = p.div.getBoundingClientRect();
+    for (const e of p.div.querySelectorAll('.textLayer span[role="presentation"]')) {
+      if (skip.has(e) || !e.textContent.trim() || !range.intersectsNode(e)) continue;
+      const part = document.createRange();
+      part.selectNodeContents(e);
+      if (e.contains(range.startContainer)) part.setStart(range.startContainer, range.startOffset);
+      if (e.contains(range.endContainer)) part.setEnd(range.endContainer, range.endOffset);
+      for (const r of part.getClientRects()) {
+        if (r.width < 1 || r.height < 1) continue;
+        rects.push({ p: p.num, x: (r.left - b.left) / b.width, y: (r.top - b.top) / b.height, w: r.width / b.width, h: r.height / b.height });
+      }
+    }
   }
   if (!rects.length) return null;
   const page = +startPage.dataset.page;
   const merged = mergeRects(rects);
   const first = merged.find((r) => r.p === page) || merged[0];
   return { kind: "text", page, top: first.y, rects: merged, quote, ...context(page, quote), anchor: range.getBoundingClientRect() };
+}
+// A running header or footer: the first or last line of text on the page, in its top or bottom
+// 15 %, set apart from the body by a clearly wider gap than the usual line spacing.
+function marginLines(p) {
+  const b = p.div.getBoundingClientRect();
+  const lines = [];
+  for (const e of p.div.querySelectorAll('.textLayer span[role="presentation"]')) {
+    if (!e.textContent.trim()) continue;
+    const r = e.getBoundingClientRect();
+    if (r.height < 1) continue;
+    const y = (r.top + r.height / 2 - b.top) / b.height, h = r.height / b.height;
+    let l = lines.find((l) => Math.abs(l.y - y) < Math.min(l.h, h) / 2);
+    if (!l) lines.push((l = { page: p.num, y, h, spans: [] }));
+    l.spans.push(e);
+  }
+  if (lines.length < 4) return [];
+  lines.sort((a, b) => a.y - b.y);
+  const gaps = lines.slice(1).map((l, i) => l.y - lines[i].y);
+  const usual = [...gaps].sort((a, b) => a - b)[gaps.length >> 1];
+  const out = [], last = lines.length - 1;
+  if (lines[0].y < 0.15 && gaps[0] > 1.5 * usual) out.push(lines[0]);
+  if (lines[last].y > 0.85 && gaps[last - 1] > 1.5 * usual) out.push(lines[last]);
+  return out;
 }
 function mergeRects(rects) {
   rects.sort((a, b) => a.p - b.p || a.y - b.y || a.x - b.x);
