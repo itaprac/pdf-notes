@@ -9,10 +9,20 @@ agent read the files directly.
   **whole page**, or add a **general note**.
 - Every note keeps the page, the section (from the PDF bookmarks), the
   quoted text with 80 characters of context on each side, and its status
-  (`open`, `done`, `rejected`).
+  (`open`, `done`, `rejected`). A selection across a page break leaves out
+  the running header, footer and page number in between.
+- Whoever handles a note (you or an agent) can add a short `reply`: what
+  was changed, why the note was rejected, or a proposal. It is shown under
+  the note.
 - Notes are written in a small popover next to what they are about. Click
   marked text or its pin to read and edit the note in place.
-- **Copy as Markdown** / **Download .md** exports all notes in reading order.
+- **Copy for AI agent** / **Download for agent** exports the open notes for
+  a coding agent that gets nothing else: where the PDF, the notes file and
+  the PDF snapshots are, which build each note was made on, how to look at a
+  marked area, what to do, and how to mark notes `done` or `rejected` with a
+  reply through the API. See [Handing notes to an agent](#handing-notes-to-an-agent).
+- **Copy as Markdown** / **Download .md** exports all notes in reading order,
+  for reading.
 - **Download PDF with notes** writes the notes into a copy of the PDF as
   standard annotations (highlights, rectangles, sticky notes), readable in
   Preview, Acrobat and other viewers. It exports the notes shown in the list.
@@ -84,7 +94,8 @@ A note looks like this:
 ```
 
 `page` is the 1-based PDF page; `rects` are fractions of the page size;
-`pdfVersion` is the first 12 hex digits of the PDF's SHA-256.
+`pdfVersion` is the first 12 hex digits of the PDF's SHA-256. A note that
+has been answered also has `reply` and `updated`.
 
 ## API
 
@@ -96,14 +107,39 @@ A note looks like this:
 | GET | `/api/docs/<id>` | document info and current `version` |
 | GET | `/api/docs/<id>/pdf` | the PDF |
 | GET, POST | `/api/docs/<id>/notes` | list or add notes |
-| PUT, DELETE | `/api/docs/<id>/notes/<note>` | change `note` or `status`, or delete |
+| GET | `/api/docs/<id>/notes?download=1` | the notes JSON as a file |
+| PUT, DELETE | `/api/docs/<id>/notes/<note>` | change `note`, `status` or `reply`, or delete |
 | GET | `/api/docs/<id>/export.md` | notes as Markdown (`?download=1` to download) |
+| GET | `/api/docs/<id>/export-agent.md` | open notes for an AI agent (`?status=all` for all, `?download=1`) |
 
 An agent that has applied a note can mark it done:
 
 ```sh
-curl -X PUT localhost:8765/api/docs/<id>/notes/<note> -d '{"status": "done"}'
+curl -X PUT localhost:8765/api/docs/<id>/notes/<note> \
+  -H 'Content-Type: application/json' \
+  -d '{"status": "done", "reply": "Split the sentence in two."}'
 ```
+
+## Handing notes to an agent
+
+An agent working on the same machine can read `notes.json` directly, but
+the agent export also works when it is pasted into a chat elsewhere. It is
+Markdown with:
+
+- a header with the counts by status, the PDF path and its current version,
+  the notes file, and the snapshot of every PDF build the notes refer to
+  (pages of a note made on an older build refer to that snapshot);
+- short instructions: change the source, not the PDF; find passages by their
+  quote; propose instead of guessing when a note is a question or unclear;
+  mark each note `done` or `rejected` with a one-line `reply`; never edit the
+  notes files by hand (the server rewrites them);
+- the `curl` command to report back, with this server's local address and
+  the address it was opened at in the browser;
+- the open notes in reading order, numbered as in the app. A marked area
+  comes with its page, its box as fractions of the page and a `pdftoppm`
+  command that renders the page from the right snapshot. A quote that runs
+  over a page break is flagged, since notes made before this was handled
+  may contain a running header or page number.
 
 ## Tests
 

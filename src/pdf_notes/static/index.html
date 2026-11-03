@@ -238,6 +238,10 @@
   .card .kind .i { width: 14px; height: 14px; }
   .card .note { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
   .card .note .none { color: var(--faint); font-style: italic; }
+  .reply { display: flex; gap: 6px; margin-top: 6px; padding: 5px 8px; border-radius: 6px; background: var(--subtle); color: var(--muted);
+           font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .reply .i { flex: none; width: 14px; height: 14px; margin-top: 2px; }
+  #ed-reply { max-height: 90px; overflow: auto; margin: 0 0 8px; }
   .card .acts { display: flex; gap: 2px; margin: 8px -6px 0; align-items: center; }
   .card .acts .spacer { flex: 1; }
   .card .acts .btn { color: var(--muted); }
@@ -365,6 +369,8 @@
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M10 4h4M9 13v1M15 13v1M2 13v2M22 13v2"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 24 24"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></symbol>
   <symbol id="i-page" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
 </svg>
 
@@ -438,6 +444,8 @@
     </div>
     <div id="list"></div>
     <div class="export">
+      <button class="btn" id="copyagent" data-t-title="agentTitle"><svg class="i"><use href="#i-bot"/></svg><span data-t="copyAgent"></span></button>
+      <button class="btn" id="dlagent" data-t-title="agentTitle"><svg class="i"><use href="#i-download"/></svg><span data-t="downloadAgent"></span></button>
       <button class="btn" id="copymd"><svg class="i"><use href="#i-copy"/></svg><span data-t="copyMd"></span></button>
       <button class="btn" id="dlmd"><svg class="i"><use href="#i-download"/></svg><span data-t="downloadMd"></span></button>
       <button class="btn wide" id="dlpdf" data-t-title="downloadPdfTitle"><svg class="i"><use href="#i-download"/></svg><span data-t="downloadPdf"></span></button>
@@ -465,6 +473,7 @@
   </div>
   <div class="dlg-body">
     <div class="quote" id="ed-quote"></div>
+    <div class="reply" id="ed-reply" hidden></div>
     <textarea id="ed-note" rows="3" aria-labelledby="ed-title"></textarea>
   </div>
   <div class="dlg-foot">
@@ -498,6 +507,9 @@ const STR = {
     toggleList: "Show/hide notes", close: "Close", page: "page", pageShort: "p.", filterOpen: "Open", filterAll: "All",
     notesTitle: "Notes", general: "General", generalTitle: "A note about the whole document",
     copyMd: "Copy Markdown", downloadMd: "Download .md", copied: "Notes copied to clipboard",
+    copyAgent: "Copy for AI agent", downloadAgent: "Download for agent", copiedAgent: (n) => `${n} open ${n === 1 ? "note" : "notes"} copied for an AI agent`,
+    agentTitle: "Open notes as Markdown for an AI coding agent: file paths, PDF versions, what to do, and how to mark notes done or rejected through the API",
+    agentMissing: "This export needs a newer server; restart pdf-notes", reply: "Reply",
     downloadPdf: "Download PDF with notes", downloadPdfTitle: "The PDF with highlights and notes as annotations (Preview, Acrobat, …). Exports the notes shown in the list.",
     building: "Building PDF…", pdfFailed: "Could not build the PDF", tips: "How it works",
     help: "Select text, then <b>Add note</b>. For a figure or table use <b>Area</b> (<kbd>R</kbd>). For a whole page use the button in the page corner. Click marked text to find its note. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. Everything is saved immediately.",
@@ -527,6 +539,9 @@ const STR = {
     toggleList: "Pokaż/ukryj listę", close: "Zamknij", page: "strona", pageShort: "s.", filterOpen: "Otwarte", filterAll: "Wszystkie",
     notesTitle: "Uwagi", general: "Ogólna", generalTitle: "Uwaga do całego dokumentu",
     copyMd: "Kopiuj Markdown", downloadMd: "Pobierz .md", copied: "Uwagi skopiowane do schowka",
+    copyAgent: "Kopiuj dla agenta AI", downloadAgent: "Pobierz dla agenta", copiedAgent: (n) => `Skopiowano dla agenta AI: ${n} ${plural(n, "otwarta uwaga", "otwarte uwagi", "otwartych uwag")}`,
+    agentTitle: "Otwarte uwagi w Markdownie dla agenta AI: ścieżki plików, wersje PDF-a, co ma zrobić i jak przez API oznaczyć uwagę jako zrobioną albo odrzuconą",
+    agentMissing: "Ten eksport wymaga nowszego serwera; uruchom pdf-notes ponownie", reply: "Odpowiedź",
     downloadPdf: "Pobierz PDF z uwagami", downloadPdfTitle: "PDF z zakreśleniami i notatkami jako adnotacjami (Podgląd, Acrobat, …). Eksportuje uwagi widoczne na liście.",
     building: "Tworzenie PDF-a…", pdfFailed: "Nie udało się utworzyć PDF-a", tips: "Jak to działa",
     help: "Zaznacz tekst, potem <b>Dodaj uwagę</b>. Rysunek albo tabelę zaznacz <b>Obszarem</b> (<kbd>R</kbd>). Całą stronę — przyciskiem w rogu strony. Kliknięcie zaznaczonego tekstu pokazuje jego uwagę. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> zapisuje. Wszystko zapisuje się od razu.",
@@ -1132,6 +1147,9 @@ function openEditor(item, existing = null) {
   // Next to its marked passage the editor needs no quote; it shows one only when centered.
   $("ed-quote").hidden = !item.quote || !!item.anchor;
   $("ed-quote").textContent = item.quote || "";
+  $("ed-reply").hidden = !existing?.reply;
+  $("ed-reply").innerHTML = existing?.reply ? icon("reply") + `<span>${esc(existing.reply)}</span>` : "";
+  $("ed-reply").title = t("reply");
   $("ed-note").value = S.edInitial = existing ? existing.note : "";
   $("ed-status").hidden = !existing;
   setEdStatus(existing ? existing.status : "open");
@@ -1261,6 +1279,7 @@ function renderAll() {
       </div>
       ${n.quote ? `<div class="quote">${esc(n.quote)}</div>` : n.kind === "area" ? `<div class="kind">${icon("area")}${t("kinds").area}</div>` : n.kind === "page" ? `<div class="kind">${icon("page")}${t("kinds").page}</div>` : ""}
       <div class="note">${esc(n.note || "") || `<span class="none">${t("noText")}</span>`}</div>
+      ${n.reply ? `<div class="reply" title="${esc(t("reply"))}">${icon("reply")}<span>${esc(n.reply)}</span></div>` : ""}
       <div class="acts">
         <span class="spacer"></span>
         <button class="btn ghost sm" data-act="edit">${icon("edit")}${t("edit")}</button>
@@ -1366,14 +1385,45 @@ $("list").addEventListener("dblclick", (e) => {
 $("filter").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { S.filter = b.dataset.filter; renderAll(); } });
 
 // ---------- export ----------
-$("copymd").addEventListener("click", async () => {
+// Safari allows writing to the clipboard only within the click, so the text goes in as a promise.
+async function copyText(text) {
   try {
-    const md = await (await fetch(docUrl("/export.md"))).text();
-    await navigator.clipboard.writeText(md);
-    toast(t("copied"));
-  } catch (e) { toast(e.message, true); }
+    if (!window.ClipboardItem) throw new Error("no ClipboardItem");
+    await navigator.clipboard.write([new ClipboardItem({ "text/plain": text.then((s) => new Blob([s], { type: "text/plain" })) })]);
+  } catch (e) {
+    await navigator.clipboard.writeText(await text);
+  }
+}
+async function fetchText(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.text();
+}
+$("copymd").addEventListener("click", async () => {
+  try { await copyText(fetchText(docUrl("/export.md"))); toast(t("copied")); }
+  catch (e) { toast(e.message, true); }
 });
 $("dlmd").addEventListener("click", () => { location.href = docUrl("/export.md?download=1"); });
+// The agent export names this server as the browser sees it, e.g. behind a proxy.
+function agentExport() {
+  return fetchText(docUrl(`/export-agent.md?origin=${encodeURIComponent(location.origin)}`))
+    .catch((e) => { throw e.message === "404" ? new Error(t("agentMissing")) : e; });
+}
+$("copyagent").addEventListener("click", async () => {
+  try { await copyText(agentExport()); toast(t("copiedAgent", S.notes.filter((n) => n.status === "open").length)); }
+  catch (e) { toast(e.message, true); }
+});
+$("dlagent").addEventListener("click", async () => {
+  try { download(new Blob([await agentExport()], { type: "text/markdown" }), S.doc.name.replace(/\.pdf$/i, "") + "-agent.md"); }
+  catch (e) { toast(e.message, true); }
+});
+function download(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
 $("dlpdf").addEventListener("click", () => exportPdf().catch((e) => { console.error(e); toast(`${t("pdfFailed")}: ${e.message}`, true); }));
 
 // Writes the notes into a copy of the PDF as standard annotations:
@@ -1391,7 +1441,7 @@ async function exportPdf() {
   const notes = [...S.notes].sort(order).filter((n) => S.filter === "all" || n.status === "open");
   for (const n of notes) {
     const color = COLORS[n.status] || COLORS.open;
-    const text = (n.note || "") + (n.status !== "open" ? `\n[${t("st_" + n.status).toLowerCase()}]` : "");
+    const text = (n.note || "") + (n.status !== "open" ? `\n[${t("st_" + n.status).toLowerCase()}]` : "") + (n.reply ? `\n↳ ${n.reply}` : "");
     // No /T (author): viewers would show it as a title above every note.
     const common = { Contents: PDFHexString.fromText(text), NM: PDFHexString.fromText(n.id), M: PDFString.fromDate(new Date(n.updated || n.created)), C: color, F: 4 };
     if (n.kind === "text" || n.kind === "area") {
@@ -1425,12 +1475,7 @@ async function exportPdf() {
       pages[num - 1].node.addAnnot(ctx.register(ctx.obj({ Type: "Annot", Subtype: "Text", Name: "Comment", Open: false, Rect: [x, y - 20, x + 20, y], ...common })));
     }
   }
-  const out = await pdf.save();
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([out], { type: "application/pdf" }));
-  a.download = S.doc.name.replace(/\.pdf$/i, "") + "-notes.pdf";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  download(new Blob([await pdf.save()], { type: "application/pdf" }), S.doc.name.replace(/\.pdf$/i, "") + "-notes.pdf");
 }
 
 // ---------- toolbar ----------

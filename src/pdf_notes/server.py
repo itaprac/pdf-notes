@@ -12,6 +12,8 @@ import hashlib
 import json
 import mimetypes
 import os
+import re
+import shlex
 import shutil
 import sys
 import threading
@@ -27,7 +29,10 @@ STATIC = Path(__file__).resolve().parent / "static"
 MAX_UPLOAD = 500 * 1024 * 1024
 STATUSES = ("open", "done", "rejected")
 NOTE_FIELDS = ("kind", "page", "top", "section", "quote", "prefix", "suffix", "rects", "note")
-EDITABLE = ("note", "status")
+EDITABLE = ("note", "status", "reply")
+MAX_REPLY = 4000
+# An origin the browser reports for itself, e.g. "https://host.example:8443".
+ORIGIN = re.compile(r"https?://([A-Za-z0-9.\-]+|\[[0-9A-Fa-f:.]+\])(:\d+)?/?")
 
 
 def now():
@@ -49,12 +54,15 @@ def write_atomic(path, text):
     os.replace(tmp, path)
 
 
+def note_order(n):
+    return (n.get("page") or 10**9, n.get("top") or 0, n.get("created", ""))
+
+
 def render_markdown(doc, notes):
     """Notes as Markdown, ordered as they appear in the document."""
     out = [f"# Notes: {doc['name']}", "",
            "Generated from the notes JSON file; do not edit by hand.", ""]
-    key = lambda n: (n.get("page") or 10**9, n.get("top") or 0, n.get("created", ""))
-    for i, n in enumerate(sorted(notes, key=key), 1):
+    for i, n in enumerate(sorted(notes, key=note_order), 1):
         where = f"p. {n['page']}" if n.get("page") else "general"
         if n.get("section"):
             where += f" · {n['section']}"
@@ -69,7 +77,137 @@ def render_markdown(doc, notes):
         elif n.get("kind") == "page":
             out += ["*(whole page)*", ""]
         out += [n.get("note", "").strip() or "*(no text)*", ""]
+        if n.get("reply"):
+            out += ["Reply: " + " ".join(n["reply"].split()), ""]
         out += [f"*{n['created']} · PDF {n.get('pdfVersion', '?')}*", ""]
+    return "\n".join(out)
+
+
+def _span(a, b):
+    return f"{a * 100:.0f}–{b * 100:.0f} %"
+
+
+def _agent_note(n, no, ctx, with_status):
+    """One note of the agent export: what it is about, where to find it, and the comment."""
+    where = f"p. {n['page']}" if n.get("page") else "whole document"
+    if n.get("section"):
+        where += f" · {n['section']}"
+    if with_status:
+        where += f" · {n['status']}"
+    out = [f"### {no}. {where} · `{n['id']}`", ""]
+
+    version = n.get("pdfVersion")
+    old = bool(version and ctx["version"] and version != ctx["version"])
+    pdf = ctx["snapshots"].get(version) if old else ctx["pdf"]
+    facts = []
+    kind = n.get("kind")
+    if kind == "area":
+        for r in n.get("rects") or []:
+            fact = (f"Marked area on p. {r['p']}, x {_span(r['x'], r['x'] + r['w'])}, y {_span(r['y'], r['y'] + r['h'])} "
+                    "of the page (from the top-left): probably a figure, table or listing. Look at it before you act")
+            if pdf:
+                out_png = f"/tmp/note-{n['id']}"
+                fact += (f": `pdftoppm -f {r['p']} -l {r['p']} -r 100 -singlefile -png {shlex.quote(pdf)} {out_png}` "
+                         f"writes `{out_png}.png`")
+            facts.append(fact + ".")
+    elif kind == "page":
+        facts.append(f"About the whole of p. {n.get('page')}.")
+    elif kind == "general":
+        facts.append("About the whole document, not a particular passage.")
+    pages = sorted({r.get("p") for r in n.get("rects") or [] if r.get("p")})
+    if n.get("quote") and len(pages) > 1:
+        facts.append(f"The selection crosses a page break (pp. {pages[0]}–{pages[-1]}): the quote may contain a running "
+                     "header, footer or page number; leave those out when you search the source.")
+    if old:
+        facts.append(f"Made on the older build `{version}`; page numbers and positions refer to "
+                     + ("its snapshot (see Files)." if pdf else "that build, of which no snapshot was kept."))
+    out += [f"- {f}" for f in facts] + ([""] if facts else [])
+
+    q = " ".join(n.get("quote", "").split())
+    if q:
+        out += ["Quote:", "", "> " + q, ""]
+        if (n.get("prefix") or n.get("suffix")) and len(q) < 160:
+            out += [f"Context: …{n.get('prefix', '')}**[{q}]**{n.get('suffix', '')}…", ""]
+    text = n.get("note", "").strip()
+    out += ["Comment:", ""] + (_blockquote(text) if text else ["*(no text: the marking is the note)*"]) + [""]
+    if n.get("reply"):
+        out += ["Earlier reply:", ""] + _blockquote(n["reply"]) + [""]
+    return out
+
+
+def _blockquote(text):
+    return ["> " + line if line.strip() else ">" for line in text.strip().splitlines()]
+
+
+def render_agent_markdown(doc, notes, ctx, status="open"):
+    """Notes as a hand-off to an AI coding agent.
+
+    Unlike `render_markdown`, which is meant for reading, this states where the
+    files are, which PDF build each note refers to, what the agent should do,
+    and how to report back through the API. `ctx` comes from
+    `Library.agent_context` plus `api` (base URL of this server) and
+    `browser` (the URL as opened in the browser, if different).
+    """
+    ordered = sorted(notes, key=note_order)
+    number = {n["id"]: i for i, n in enumerate(ordered, 1)}
+    shown = [n for n in ordered if status == "all" or n["status"] == status]
+    counts = ", ".join(f"{sum(1 for n in notes if n['status'] == s)} {s}" for s in STATUSES)
+    which = "all of them" if status == "all" else f"the {len(shown)} {status} ones"
+    api = ctx["api"].rstrip("/")
+    doc_api = f"{api}/api/docs/{quote(doc['id'], safe='')}"
+
+    out = [f"# Review notes for an AI agent: {doc['name']}", "",
+           "The author read the PDF in pdf-notes, marked passages and wrote what should change.",
+           f"{len(notes)} notes: {counts}. Below are {which}, in reading order; "
+           "the number is the one shown in the app.", "",
+           "## Files", ""]
+    if doc["kind"] == "path":
+        out.append(f"- PDF: `{ctx['pdf']}`, current build `{ctx['version'] or '?'}`. "
+                   "It is built from the source and changes when the source is rebuilt.")
+    else:
+        out.append(f"- PDF: `{ctx['pdf']}` (an uploaded copy; it does not change), version `{ctx['version'] or '?'}`.")
+    copy = f" (Markdown copy: `{ctx['notes_md']}`)" if Path(ctx["notes_md"]).exists() else ""
+    out.append(f"- Notes: `{ctx['notes']}`{copy}. The server owns these files; do not edit them.")
+    versions = {}
+    for n in shown:
+        versions[n.get("pdfVersion")] = versions.get(n.get("pdfVersion"), 0) + 1
+    if set(versions) - {ctx["version"]}:
+        out.append("- PDF builds these notes were made on (`pdfVersion`, the first 12 hex digits of the PDF's SHA-256):")
+        for v, k in sorted(versions.items(), key=lambda x: (x[0] != ctx["version"], str(x[0]))):
+            label = "the current build" if v == ctx["version"] else "older"
+            snap = ctx["snapshots"].get(v)
+            where = f"snapshot `{snap}`" if snap else ("same as the PDF above" if v == ctx["version"] else "no snapshot kept")
+            out.append(f"  - `{v or '?'}`, {label}: {k} {'note' if k == 1 else 'notes'}; {where}")
+    elif shown:
+        out.append("- All these notes were made on the current build.")
+    out.append("")
+
+    out += ["## What to do", "",
+            "1. Make each change in the source the PDF is built from (e.g. the LaTeX files), not in the PDF.",
+            "2. Find the passage by its quote; search for a distinctive part of it. Page numbers belong to the "
+            "build the note was made on and may have moved since.",
+            "3. If a note is a question, is unclear or is a matter of taste, do not guess: leave it open and "
+            "put your proposal (or your question) in `reply`.",
+            "4. When you have applied a note, mark it `done`; when you decide against it, mark it `rejected`. "
+            "Either way give a one-line `reply` saying what you changed or why not.",
+            "5. Report through the API below. Do not edit the notes files by hand and do not add or delete notes.", "",
+            "## Reporting back", "",
+            "```sh",
+            f"curl -X PUT {doc_api}/notes/NOTE_ID \\",
+            "  -H 'Content-Type: application/json' \\",
+            "  -d '{\"status\": \"done\", \"reply\": \"Shortened the paragraph to two sentences.\"}'",
+            "```", "",
+            "`status` is `open`, `done` or `rejected`; `reply` is shown to the author next to the note. "
+            "Sending only `reply` keeps the status. "
+            f"`GET {doc_api}/notes` returns the current notes as JSON.", "",
+            f"The server runs at <{api}/> on the machine that runs pdf-notes"
+            + (f" and was opened in the browser at <{ctx['browser'].rstrip('/')}/>." if ctx.get("browser") else ".")
+            + " If you cannot reach it, list the note ids with your status and reply in your answer instead.", "",
+            "## Notes", ""]
+    if not shown:
+        out += [f"*(no {status} notes)*" if status != "all" else "*(no notes)*", ""]
+    for n in shown:
+        out += _agent_note(n, number[n["id"]], ctx, status == "all")
     return "\n".join(out)
 
 
@@ -121,6 +259,19 @@ class Library:
         v = file_hash(pdf)
         self._versions[doc["id"]] = ((st.st_mtime_ns, st.st_size), v)
         return v
+
+    def agent_context(self, doc, notes):
+        """Paths and versions the agent export needs."""
+        pdf = self.pdf_path(doc)
+        notes_file = self.notes_path(doc)
+        ctx = {"pdf": str(pdf), "version": self.version(doc) if pdf.exists() else None,
+               "notes": str(notes_file), "notes_md": str(notes_file.with_suffix(".md")), "snapshots": {}}
+        if doc["kind"] == "path":
+            for v in {n.get("pdfVersion") for n in notes if n.get("pdfVersion")}:
+                snap = self.snapshots_dir(doc) / f"{v}.pdf"
+                if snap.exists():
+                    ctx["snapshots"][v] = str(snap)
+        return ctx
 
     def describe(self, doc):
         pdf = self.pdf_path(doc)
@@ -208,6 +359,8 @@ class Library:
             for n in notes:
                 if n["id"] == note_id:
                     n.update({k: body[k] for k in EDITABLE if k in body})
+                    if "reply" in body:
+                        n["reply"] = (body["reply"] or "").strip()
                     n["updated"] = now()
                     self._save_notes(doc, notes)
                     return n
@@ -259,6 +412,18 @@ def make_handler(lib):
             parts = [unquote(p) for p in url.path.strip("/").split("/") if p]
             return url, parts
 
+        def disposition(self, doc, suffix, query):
+            if "download" not in query:
+                return {"Content-Disposition": "inline"}
+            name = Path(doc["name"]).stem + suffix
+            return {"Content-Disposition": "attachment; filename*=UTF-8''" + quote(name, safe="")}
+
+        def local_url(self):
+            """This server as seen from its own machine."""
+            host, port = self.server.server_address[:2]
+            host = {"0.0.0.0": "127.0.0.1", "": "127.0.0.1", "::": "::1"}.get(host, host)
+            return f"http://{'[' + host + ']' if ':' in host else host}:{port}"
+
         def doc_or_404(self, doc_id):
             doc = lib.get(doc_id)
             if not doc:
@@ -286,13 +451,30 @@ def make_handler(lib):
                     if not pdf.exists():
                         return self.fail(HTTPStatus.NOT_FOUND, "PDF file is missing")
                     return self.send_bytes(pdf.read_bytes(), "application/pdf")
+                query = parse_qs(url.query)
                 if parts[3] == "notes" and len(parts) == 4:
+                    if "download" in query:
+                        data = (json.dumps(lib.notes(doc), ensure_ascii=False, indent=2) + "\n").encode()
+                        return self.send_bytes(data, "application/json; charset=utf-8",
+                                               extra=self.disposition(doc, "-notes.json", query))
                     return self.send_json(lib.notes(doc))
                 if parts[3] == "export.md":
                     md = render_markdown(doc, lib.notes(doc)).encode()
-                    name = Path(doc["name"]).stem + "-notes.md"
-                    disp = "attachment; filename*=UTF-8''" + quote(name, safe="") if "download" in parse_qs(url.query) else "inline"
-                    return self.send_bytes(md, "text/markdown; charset=utf-8", extra={"Content-Disposition": disp})
+                    return self.send_bytes(md, "text/markdown; charset=utf-8", extra=self.disposition(doc, "-notes.md", query))
+                if parts[3] == "export-agent.md":
+                    status = (query.get("status") or ["open"])[0]
+                    if status not in STATUSES + ("all",):
+                        return self.fail(HTTPStatus.BAD_REQUEST, f"status must be one of {', '.join(STATUSES)}, all")
+                    with lib.lock:
+                        notes = lib.notes(doc)
+                        ctx = lib.agent_context(doc, notes)
+                    ctx["api"] = self.local_url()
+                    scheme = "https" if self.headers.get("X-Forwarded-Proto") == "https" else "http"
+                    browser = (query.get("origin") or [""])[0] or f"{scheme}://{self.headers.get('Host', '')}"
+                    if ORIGIN.fullmatch(browser) and urlparse(browser).hostname not in ("localhost", "127.0.0.1", "::1"):
+                        ctx["browser"] = browser
+                    md = render_agent_markdown(doc, notes, ctx, status).encode()
+                    return self.send_bytes(md, "text/markdown; charset=utf-8", extra=self.disposition(doc, "-agent.md", query))
             self.fail(HTTPStatus.NOT_FOUND, "not found")
 
         def static(self, rel):
@@ -338,8 +520,12 @@ def make_handler(lib):
                 if not doc:
                     return
                 body = self.body_json()
-                if body is None or body.get("status", "open") not in STATUSES:
+                if not isinstance(body, dict):
+                    return self.fail(HTTPStatus.BAD_REQUEST, "expected a JSON object")
+                if body.get("status", "open") not in STATUSES:
                     return self.fail(HTTPStatus.BAD_REQUEST, f"status must be one of {', '.join(STATUSES)}")
+                if not isinstance(body.get("reply", ""), (str, type(None))) or len(body.get("reply") or "") > MAX_REPLY:
+                    return self.fail(HTTPStatus.BAD_REQUEST, f"reply must be text of at most {MAX_REPLY} characters")
                 note = lib.update_note(doc, parts[4], body)
                 return self.send_json(note) if note else self.fail(HTTPStatus.NOT_FOUND, "no such note")
             self.fail(HTTPStatus.NOT_FOUND, "not found")
